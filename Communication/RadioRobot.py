@@ -105,4 +105,4 @@ class RadioRobot:
 #      RadioRobot1.readAll()
 
 #RadioRobot2 = RadioRobot(2)
-"RadioRobot2.writeAll("ABCDEFGHIJKLMNOPQRSTUVWXYZ")
+#RadioRobot2.writeAll("ABCDEFGHIJKLMNOPQRSTUVWXYZ")
