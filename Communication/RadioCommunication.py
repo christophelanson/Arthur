@@ -57,16 +57,18 @@ class RadioCommuncation:
             else:
                 self.executeCmd(message)
                 
-    def executeCmd(message):
+    def executeCmd(self,message):
         
-        if message == self.dictCommande["TurnLeft"]:
+        message = hex(ord(message))
+        if message == hex(self.dictCommande["TurnLeft"]):
             print("Turn Left")
-        if message == self.dictCommande["TurnRigth"]:
+        if message == hex(self.dictCommande["TurnRigth"]):
             print("Turn Rigth")
-        if message == self.dictCommande["Go"]:
+        if message == hex(self.dictCommande["Go"]):
             print("Go")
-        if message == self.dictCommande["Back"]:
+        if message == hex(self.dictCommande["Back"]):
             print("Back")
+
             
     def convertData(self,data):
         node_id = data[0]
@@ -97,7 +99,7 @@ class RadioCommuncation:
         
 
     def codeData(self,data):
-        data = self.dictCommande["startByte"] + str(self.Name) + data + self.dictCommande["stopByte"]
+        data = chr(self.dictCommande["startByte"]) + chr(str(self.Name)) + chr(data) + chr(self.dictCommande["stopByte"])
         return data
 
     def listen(self):
@@ -105,11 +107,11 @@ class RadioCommuncation:
             data = self.readAll()
             self.decodeData(data)
 
-rc1 = RadioCommuncation(1)
+rc1 = RadioCommuncation(2)
 while True:
     rc1.listen()
 
-rc2 = RadioCommuncation(2)
+rc2 = RadioCommuncation(1)
 while True:
     rc2.send(self.dictCommande["Go"])
 
