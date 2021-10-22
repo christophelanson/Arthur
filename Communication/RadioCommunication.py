@@ -12,7 +12,7 @@ class RadioCommuncation:
         self.requestMessage = ["wantToSpeak"]
         self.receivedMessage = []
         self.dictCommande = {"startByte": 0x00,                  
-                             "stopByte": 0xFF,
+                             "stopByte": 0x40,
                              "wantToSpeak" : 0x10,
                              "PermissionToSpeak" : 0x11,
                              "TurnLeft" : 0x12,
@@ -32,11 +32,11 @@ class RadioCommuncation:
             self.decodeData(payload)
 
     def write(self, listName, data):
-        data = codeData(self,data)
+        data = self.codeData(self,data)
         self.Radio.write(listName,data)
         
-    def writeAll(self, listName, data):
-        data = codeData(self,data)
+    def writeAll(self, data):
+        data = codeData(data)
         self.Radio.writeAll(data)
 
     def decodeData(self,data):
@@ -99,7 +99,7 @@ class RadioCommuncation:
         
 
     def codeData(self,data):
-        data = chr(self.dictCommande["startByte"]) + chr(str(self.Name)) + chr(data) + chr(self.dictCommande["stopByte"])
+        data = chr(self.dictCommande["startByte"]) + chr(self.Name) + chr(data) + chr(self.dictCommande["stopByte"])
         return data
 
     def listen(self):
@@ -113,5 +113,5 @@ while True:
 
 rc2 = RadioCommuncation(1)
 while True:
-    rc2.send(self.dictCommande["Go"])
+    rc2.send(rc2.dictCommande["Go"])
 
