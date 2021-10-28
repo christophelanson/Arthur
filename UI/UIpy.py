@@ -38,7 +38,7 @@ class UI:
         #self.listenPara()
         self.functionPara = ""
         self.commandMotor = ""
-        self.ui.messageReceive = ""
+        self.messageReceive = ""
         if self.isMaster:
             self.root = Tk()
             self.frm = ttk.Frame(self.root, padding=10)
@@ -75,8 +75,22 @@ class UI:
         #self.generateParaFunction("send")
     
     def decodeReiceivedMessage(self):
-        for data in self.messageReceive:
-            print(data)
+        payload = []
+        for i, data in enumerate(self.messageReceive):
+            payload.append(int(hex(ord(data)),16))
+        if payload[0] != 0 and payload[0] != 64:
+            print("erreur with payload received, first or last char wrong)
+        else:
+            payload = data[1:-1]
+            action = payload[0]
+            print("action", action )
+            if action == self.rc.dictCommande["RUN"]:
+                Command = payload[1:]
+                print("timeMove",payload[1] + payload[2]/100)
+                print("direction",payload[3])
+                print("initSpeed",payload[4])
+                print("maxSpeed",payload[5])
+                print("finalSpeed",payload[6])
     
 
 ui = UI()
