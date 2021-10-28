@@ -15,7 +15,8 @@ class Process(multiprocessing.Process):
          
         if self.ui.functionPara == "listen":
             print("I'm the listen process with id: {}".format(self.id))
-            self.ui.rc.listen()
+            self.ui.messageReceive = self.ui.rc.listen()
+            self.ui.decodeReiceivedMessage()
         
         if self.ui.functionPara == "send":
             print("I'm the send process with id: {}".format(self.id))
@@ -34,9 +35,10 @@ class UI:
         self.finalSpeed = 0
         self.angle = 90 
         self.rc = RadioCommunication.RadioCommuncation(1)
-        self.listenPara()
+        #self.listenPara()
         self.functionPara = ""
         self.commandMotor = ""
+        self.ui.messageReceive = ""
         if self.isMaster:
             self.root = Tk()
             self.frm = ttk.Frame(self.root, padding=10)
@@ -69,7 +71,12 @@ class UI:
         command.append(self.finalSpeed)
         print("Commande send:",command)
         self.commandMotor = command
-        self.generateParaFunction("send")
-        
+        self.rc.send(command)
+        #self.generateParaFunction("send")
+    
+    def decodeReiceivedMessage(self):
+        for data in self.messageReceive:
+            print(data)
+    
 
 ui = UI()
