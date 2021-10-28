@@ -1,6 +1,7 @@
 from tkinter import *
 from tkinter import ttk
 sys.path.insert(0, '../Communication')
+sys.path.insert(0, '../Motor')
 import RadioCommunication
 import multiprocessing 
 
@@ -21,6 +22,10 @@ class Process(multiprocessing.Process):
         if self.ui.functionPara == "send":
             print("I'm the send process with id: {}".format(self.id))
             self.ui.rc.send(self.ui.commandMotor)
+        
+        if self.ui.functionPara == "driveMotor":
+            print("I'm the drive motor process with id: {}".format(self.id))
+            self.ui.motor.send(self.ui.funcDriveMotor,self.ui.DriveMotorCommand)
 
 class UI:
     
@@ -35,6 +40,7 @@ class UI:
         self.finalSpeed = 0
         self.angle = 90 
         self.rc = RadioCommunication.RadioCommuncation(1)
+        self.motor = Motor.Motor()
         #self.listenPara()
         self.functionPara = ""
         self.commandMotor = ""
@@ -74,23 +80,30 @@ class UI:
         self.rc.send(command)
         #self.generateParaFunction("send")
     
+    def commandMotorPara(self, funcDriveMotor, DriveMotorCommand):
+        self.funcDriveMotor = "Run"
+        self.DriveMotorCommand = DriveMotorCommand
+        self.generateParaFunction("driveMotor")
+        
     def decodeReiceivedMessage(self):
         payload = []
         for i, data in enumerate(self.messageReceive):
             payload.append(int(hex(ord(data)),16))
         if payload[0] != 0 and payload[0] != 64:
-            print("erreur with payload received, first or last char wrong)
+            print("erreur with payload received, first or last char wrong")
         else:
-            payload = data[1:-1]
+            payload = payload[2:-1]
             action = payload[0]
             print("action", action )
             if action == self.rc.dictCommande["RUN"]:
-                Command = payload[1:]
-                print("timeMove",payload[1] + payload[2]/100)
-                print("direction",payload[3])
-                print("initSpeed",payload[4])
-                print("maxSpeed",payload[5])
-                print("finalSpeed",payload[6])
+                command = payload[2:]
+                command[0] = payload[3] + payload[24]/100
+                print("timeMove",command[0])
+                print("direction",command[1])
+                print("initSpeed",command[2])
+                print("maxSpeed",command[3])
+                print("finalSpeed",command[4])
+                self.commandMotorPara(self, "run", command)
     
 
 ui = UI()
