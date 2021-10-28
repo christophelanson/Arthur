@@ -58,11 +58,10 @@ class RadioRobot:
                 return payload
 
     def openSpeakChanel(self, dictAddress):
-        
+        self.nrf.listen = False
         for name in dictAddress.keys():
             self.nrf.open_tx_pipe(self.ownAddress)
         print("Channel for writing from:", list(dictAddress.keys()))
-        self.nrf.listen = False
          
     def speakChanel(self, data, dictAddress):
         for name in dictAddress.keys():
@@ -72,6 +71,12 @@ class RadioRobot:
                 print("Transmission  successfull! ")
             else:
                 print("Transmission failed or timed out")
+            while not report:
+                report = self.nrf.send(payload)
+                if report:
+                    print("Transmission  successfull! ")
+                else:
+                    print("Transmission failed or timed out")
 
     def read(self, listName):
         dictAddressRead = {}
@@ -105,4 +110,7 @@ class RadioRobot:
 #      RadioRobot1.readAll()
 
 #RadioRobot2 = RadioRobot(2)
-#RadioRobot2.writeAll("ABCDEFGHIJKLMNOPQRSTUVWXYZ")
+#while True:
+#    RadioRobot2.writeAll("ABCDEFGHIJKLMNOPQRSTUVWXYZ")
+
+
