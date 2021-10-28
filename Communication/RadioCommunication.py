@@ -32,11 +32,11 @@ class RadioCommuncation:
             self.decodeData(payload)
 
     def write(self, listName, data):
-        data = self.codeData(self,data)
+        data = self.codeData(data)
         self.Radio.write(listName,data)
         
     def writeAll(self, data):
-        data = codeData(data)
+        data = self.codeData(data)
         self.Radio.writeAll(data)
 
     def decodeData(self,data):
