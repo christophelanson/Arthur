@@ -17,7 +17,7 @@ class RadioCommuncation:
                              "PermissionToSpeak" : 0x11,
                              "TurnLeft" : 0x12,
                              "TurnRigth" : 0x13,
-                             "Go" : 0x14,
+                             "RUN" : 0x14,
                              "Back" : 0x15,
                             }# hexa : 0 , 255 , 16 , 17 
 
@@ -76,7 +76,7 @@ class RadioCommuncation:
         node_id = data[1]
         return node_id, message
 
-    def wantToSpeak(self,data):
+    def wantToSpeak(self):
         data = self.codeData(self.dictCommande["wantToSpeak"])
         self.write([0],data)
 
@@ -99,19 +99,25 @@ class RadioCommuncation:
         
 
     def codeData(self,data):
-        data = chr(self.dictCommande["startByte"]) + chr(self.Name) + chr(data) + chr(self.dictCommande["stopByte"])
-        return data
+        payload = chr(self.dictCommande["startByte"]) + chr(self.Name)
+        for chara in data:
+            chara = chr(chara)
+            payload = payload +chara 
+        payload = payload + chr(self.dictCommande["stopByte"])
+        print("Payload:", payload)
+        return payload
 
     def listen(self):
-        while True:
-            data = self.readAll()
-            self.decodeData(data)
+        data = self.readAll()
+        self.decodeData(data)
+        return data
 
-rc1 = RadioCommuncation(2)
-while True:
-    rc1.listen()
+#rc1 = RadioCommuncation(2)
+#while True:
+#    rc1.listen()
 
-rc2 = RadioCommuncation(1)
-while True:
-    rc2.send(rc2.dictCommande["Go"])
+#rc1 = RadioCommuncation(1)
+#while True:
+#    rc1.send([rc1.dictCommande["Back"]])
+
 
