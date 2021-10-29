@@ -8,6 +8,7 @@ import math
 class Motor:
 
     def __init__(self):
+        self.isStop = False
         self.INA = 20
         self.INB = 19
         self.ENA = 16
@@ -17,8 +18,6 @@ class Motor:
         self.listStep = [1/12, 2/12, 3/12, 3/12, 2/12, 1/12, 0, -1/12, -2/12, -3/12, -3/12, -2/12, -1/12]
         self.correctionRun = 0
         self.correctionTurn = 0
-        self.l = 0.25
-        self.RotSpeed100 = math.pi*self.l #atteint pour une vitesse angulaire de 1 tour par seconde
         self.listSpeed = []
         self.listSpeedRight = []
         self.listSpeedLeft = []
@@ -41,6 +40,7 @@ class Motor:
         self.listSpeed.append(0)
         self.listSpeedRight.append(0)
         self.listSpeedLeft.append(0)
+        self.isStop = False
 
     def calculateCorrectionRun(self, currentSpeed):
         currentSpeedRight = currentSpeed * ( 1 - self.correctionRun)
@@ -82,15 +82,19 @@ class Motor:
         nominalTime = timeMove - (self.dT * 12)
         currentSpeed = initSpeed
         for i, step in enumerate(self.listStep):
-            currentSpeed, currentSpeedLeft, currentSpeedRight = self.calculateSpeedRun(i, currentSpeed, maxSpeed)
-            self.listSpeed.append(currentSpeed)
-            self.listSpeedRight.append(currentSpeedRight)
-            self.listSpeedLeft.append(currentSpeedLeft)
-            if self.listStep[i] == 0:
-                timeStep = nominalTime
+            if self.isStop:
+                self.stop()
+                break
             else:
-                timeStep = self.dT
-            self.driveMotor(currentSpeedLeft, currentSpeedRight, timeStep, dir)
+                currentSpeed, currentSpeedLeft, currentSpeedRight = self.calculateSpeedRun(i, currentSpeed, maxSpeed)
+                self.listSpeed.append(currentSpeed)
+                self.listSpeedRight.append(currentSpeedRight)
+                self.listSpeedLeft.append(currentSpeedLeft)
+                if self.listStep[i] == 0:
+                    timeStep = nominalTime
+                else:
+                    timeStep = self.dT
+                self.driveMotor(currentSpeedLeft, currentSpeedRight, timeStep, dir)
         self.stop()
 
         plt.figure()
@@ -122,14 +126,18 @@ class Motor:
         currentSpeedRight = initSpeed
         currentSpeedLeft = initSpeed
         for i, step in enumerate(self.listStep):
-            currentSpeedLeft, currentSpeedRight = self.calculateSpeedTurn(i, currentSpeedLeft, currentSpeedRight, speedLeft, speedRight)
-            self.listSpeedRight.append(currentSpeedRight)
-            self.listSpeedLeft.append(currentSpeedLeft)
-            if self.listStep[i] == 0:
-                timeStep = nominalTime
+            if self.isStop:
+                self.stop()
+                break
             else:
-                timeStep = self.dT
-            self.driveMotor(currentSpeedLeft, currentSpeedRight, timeStep, direction)
+                currentSpeedLeft, currentSpeedRight = self.calculateSpeedTurn(i, currentSpeedLeft, currentSpeedRight, speedLeft, speedRight)
+                self.listSpeedRight.append(currentSpeedRight)
+                self.listSpeedLeft.append(currentSpeedLeft)
+                if self.listStep[i] == 0:
+                    timeStep = nominalTime
+                else:
+                    timeStep = self.dT
+                self.driveMotor(currentSpeedLeft, currentSpeedRight, timeStep, direction)
         self.stop()
 
         plt.figure()
@@ -138,12 +146,12 @@ class Motor:
         #plt.show()
         
     def receiverCommand(self,func, command):
-        if func == "run":
+        if func == "RUN":
             self.run(command[0], command[1], command[2], command[3], command[4])
-        if func == "angle":
+        if func == "TURN":
             self.turn(command[0], command[1], command[2], command[3], command[4], command[5])
-        if func == "stop":
-            self.stop
+        if func == "STOP":
+            self.isStop = True
 
 
 motor = Motor()
