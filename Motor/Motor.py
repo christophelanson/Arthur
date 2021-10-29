@@ -15,8 +15,8 @@ class Motor:
         self.dT = 0.08
         self.Step = 0
         self.listStep = [1/12, 2/12, 3/12, 3/12, 2/12, 1/12, 0, -1/12, -2/12, -3/12, -3/12, -2/12, -1/12]
-        self.correctionLeft = -0
-        self.correctionRight = 0
+        self.correctionRun = 0
+        self.correctionTurn = 0
         self.l = 0.25
         self.RotSpeed100 = math.pi*self.l #atteint pour une vitesse angulaire de 1 tour par seconde
         self.listSpeed = []
@@ -42,25 +42,25 @@ class Motor:
         self.listSpeedRight.append(0)
         self.listSpeedLeft.append(0)
 
-    def calculateCorrection(self, currentSpeed):
-        currentSpeedRight = currentSpeed + self.correctionRight
-        currentSpeedLeft = currentSpeed + self.correctionLeft
+    def calculateCorrectionRun(self, currentSpeed):
+        currentSpeedRight = currentSpeed * ( 1 - self.correctionRun)
+        currentSpeedLeft = currentSpeed * (1 + self.correctionRun)
+        return currentSpeedLeft, currentSpeedRight
+    
+    def calculateCorrectionTurn(self, currentSpeedLeft, currentSpeedRight):
+        currentSpeedRight = currentSpeedRight * ( 1 - self.correctionTurn)
+        currentSpeedLeft = currentSpeedLeft * (1 + self.correctionTurn)
         return currentSpeedLeft, currentSpeedRight
 
-    def calculateSpeed(self, step, currentSpeed, maxSpeed):
+    def calculateSpeedRun(self, step, currentSpeed, maxSpeed):
         currentSpeed = currentSpeed + (maxSpeed * self.listStep[step])
-        currentSpeedLeft, currentSpeedRight = self.calculateCorrection(currentSpeed)
+        currentSpeedLeft, currentSpeedRight = self.calculateCorrectionRun(currentSpeed)
         return currentSpeed, currentSpeedLeft, currentSpeedRight
 
-    def calculateCorrectionAngle(self, currentSpeedLeft, currentSpeedRigth):
-        currentSpeedRight = currentSpeedRigth + self.correctionRight
-        currentSpeedLeft = currentSpeedLeft + self.correctionLeft
-        return currentSpeedLeft, currentSpeedRight
-
-    def calculateSpeedAngle(self, step, currentSpeedLeft, currentSpeedRight, speedLeft, speedRight):
+    def calculateSpeedTurn(self, step, currentSpeedLeft, currentSpeedRight, speedLeft, speedRight):
         currentSpeedLeft = currentSpeedLeft + (speedLeft * self.listStep[step])
-        currentSpeedRigth = currentSpeedRight + (speedRight * self.listStep[step])
-        currentSpeedLeft, currentSpeedRight = self.calculateCorrectionAngle(currentSpeedLeft, currentSpeedRigth)
+        currentSpeedRight = currentSpeedRight + (speedRight * self.listStep[step])
+        currentSpeedLeft, currentSpeedRight = self.calculateCorrectionTurn(currentSpeedLeft, currentSpeedRight)
         return currentSpeedLeft, currentSpeedRight
 
     def driveMotor(self, currentSpeedLeft, currentSpeedRight, timeStep, direction):
@@ -82,7 +82,7 @@ class Motor:
         nominalTime = timeMove - (self.dT * 12)
         currentSpeed = initSpeed
         for i, step in enumerate(self.listStep):
-            currentSpeed, currentSpeedLeft, currentSpeedRight = self.calculateSpeed(i, currentSpeed, maxSpeed)
+            currentSpeed, currentSpeedLeft, currentSpeedRight = self.calculateSpeedRun(i, currentSpeed, maxSpeed)
             self.listSpeed.append(currentSpeed)
             self.listSpeedRight.append(currentSpeedRight)
             self.listSpeedLeft.append(currentSpeedLeft)
@@ -99,17 +99,30 @@ class Motor:
         plt.plot(self.listSpeedLeft)
         #plt.show()
 
-    def turn(self, timeMove, direction, initSpeed, maxSpeed, finalSpeed, angle):
-        angle = angle * (math.pi/180)
-        diffSpeed = (((angle * (self.l / 2)) / timeMove)/self.RotSpeed100)*100
-        speedLeft = maxSpeed + diffSpeed
-        speedRight = maxSpeed - diffSpeed
+    def turn(self, timeMove, direction, initSpeed, maxSpeed, finalSpeed, maxRotSpeed):
+        speedLeft = maxSpeed + maxRotSpeed
+        speedRight = maxSpeed - maxRotSpeed
         
+        if speedLeft > 90 : # pas de vitesse supérieure à 90
+            timeMove = timeMove * (speedLeft/90)
+            speedRight = speedRight * (90 / speedLeft)
+            speedLeft = 90
+        
+        if speedRight > 90 : # pas de vitesse supérieure à 90
+            timeMove = timeMove * (speedRight/90)
+            speedLeft = speedLeft * (90 / speedRight)
+            speedRight = 90
+        
+        if timeMove < (self.dT * 12): # augmentation du temps et réduction de la vitesse
+            speedLeft = speedLeft * (timeMove / (self.dT * 12))
+            speedRight = speedRight * (timeMove / (self.dT * 12))
+            timeMove = self.dt * 12
+            
         nominalTime = timeMove - (self.dT * 12)
         currentSpeedRight = initSpeed
         currentSpeedLeft = initSpeed
         for i, step in enumerate(self.listStep):
-            currentSpeedLeft, currentSpeedRight = self.calculateSpeedAngle(i, currentSpeedLeft, currentSpeedRight, speedLeft, speedRight)
+            currentSpeedLeft, currentSpeedRight = self.calculateSpeedTurn(i, currentSpeedLeft, currentSpeedRight, speedLeft, speedRight)
             self.listSpeedRight.append(currentSpeedRight)
             self.listSpeedLeft.append(currentSpeedLeft)
             if self.listStep[i] == 0:
@@ -124,7 +137,7 @@ class Motor:
         plt.plot(self.listSpeedLeft)
         #plt.show()
         
-    def driveMotor(self,func, command):
+    def receiverCommand(self,func, command):
         if func == "run":
             self.run(command[0], command[1], command[2], command[3], command[4])
         if func == "angle":
@@ -133,17 +146,17 @@ class Motor:
             self.stop
 
 
-#motor = Motor()
+motor = Motor()
 #motor.stop()
-# #motor.run(3, 1, 0, 30, 0)
-# motor.turn(1, 1, 0, 0, 0, 360)
+motor.run(3, 1, 0, 30, 0)
+motor.turn(1, 1, 0, 0, 0, 360)
 # try:
 #     pass
 # except KeyboardInterrupt:
 #     motor.stop()
 #     GPIO.cleanup()
 # 
-#motor.stop()
-#GPIO.cleanup()
+motor.stop()
+GPIO.cleanup()
 
 
