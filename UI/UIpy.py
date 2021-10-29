@@ -6,17 +6,34 @@ import RadioCommunication
 import multiprocessing
 import Motor
 
+class fileReader:
+    
+    def read(self, name):
+        with open(name, "r") as fichier:
+            return fichier.read()
+    
+    def write(self, name, data):
+        with open(name, "w") as fichier:
+            fichier.write(data)
+            
 class manageProcess():
     
     def __init__(self, ui):
-        self.isListenProcess = False
         self.ui = ui
+        self.fileReader = fileReader()
+        self.fileReader.write("isListenProcess.txt","0")
     
     def run(self):
         while True:
-            if self.isListenProcess == False :
+            isListenProcess = self.fileReader.read("isListenProcess.txt")
+            if isListenProcess == "0" :
+                self.fileReader.write("isListenProcess.txt","1")
                 self.ui.listenPara()
-                self.isListenProcess = True
+                
+                
+    def createListen(self):
+        print("Listen process created")
+        self.ui.listenPara()
                 
 class Process(multiprocessing.Process):
     
@@ -24,6 +41,7 @@ class Process(multiprocessing.Process):
         super(Process, self).__init__()
         self.ui = ui
         self.id = id
+        self.fileReader = fileReader()
         
     def run(self):
          
@@ -35,7 +53,7 @@ class Process(multiprocessing.Process):
             print("I'm the listen process with id: {}".format(self.id))
             self.ui.messageReceive = self.ui.rc.listen()
             self.ui.decodeReiceivedMessage()
-            self.ui.managerProcess.isListenProcess = False
+            self.fileReader.write("isListenProcess.txt","0")
             
         if self.ui.functionPara == "send":
             print("I'm the send process with id: {}".format(self.id))
@@ -53,13 +71,14 @@ class UI:
         self.id_process = 0
         self.idCommand = False
         self.idReceived = None
-        self.timeMove = 3
+        self.timeMove = 4
         self.direction = 1
         self.initSpeed = 0
-        self.maxSpeed = 50
+        self.maxSpeed = 60
         self.finalSpeed = 0
-        self.maxRotSpeed = 10
+        self.maxRotSpeed = 40
         self.oldPayload = []
+        self.isListenProcess = False
         
         self.rc = RadioCommunication.RadioCommuncation(1)
         self.motor = Motor.Motor()
@@ -76,7 +95,7 @@ class UI:
             self.frm.grid()
             ttk.Label(self.frm, text="Motor Command!").grid(column=0, row=0)
             ttk.Button(self.frm, text="RUN", command=self.runPara).grid(column=1, row=0)
-            ttk.Button(self.frm, text="STOP", command=self.stop).grid(column=1, row=2)
+            ttk.Button(self.frm, text="STOP", command=self.stop).grid(column=1, row=1)
             ttk.Button(self.frm, text="TURN", command=self.turnPara).grid(column=1, row=2)
             ttk.Button(self.frm, text="Quit", command=self.root.destroy).grid(column=1, row=3)
             self.root.mainloop()
@@ -100,7 +119,7 @@ class UI:
         command = []
         command.append(self.rc.dictCommande["RUN"])
         command.append(int(self.timeMove))
-        command.append(int(round(self.timeMove,2)%1))
+        command.append(int(round(self.timeMove,2)%1*100))
         command.append(self.direction)
         command.append(self.initSpeed)
         command.append(self.maxSpeed)
@@ -115,7 +134,7 @@ class UI:
         command = []
         command.append(self.rc.dictCommande["TURN"])
         command.append(int(self.timeMove))
-        command.append(int(round(self.timeMove,2)%1))
+        command.append(int(round(self.timeMove,2)%1*100))
         command.append(self.direction)
         command.append(self.initSpeed)
         command.append(self.maxSpeed)
@@ -166,30 +185,28 @@ class UI:
             action = payload[0]
             print("action", action )
             if action == self.rc.dictCommande["RUN"]:
-                command = payload[2:]
-                command[0] = payload[3] + payload[4]/100
-                print("timeMove",command[0])
-                print("direction",command[1])
-                print("initSpeed",command[2])
-                print("maxSpeed",command[3])
-                print("finalSpeed",command[4])
-                self.commandMotorPara( "RUN", command)
+                payload[2] = payload[1] + payload[2]/100
+                payload = payload[2:]
+                print("timeMove",payload[0], end=" ")
+                print("direction",payload[1], end=" ")
+                print("initSpeed",payload[2], end=" ")
+                print("maxSpeed",payload[3], end=" ")
+                print("finalSpeed",payload[4], end=" ")
+                self.commandMotorPara( "RUN", payload)
                 
             if action == self.rc.dictCommande["TURN"]:
-                command = payload[2:]
-                command[0] = payload[3] + payload[4]/100
-                print("timeMove",command[0])
-                print("direction",command[1])
-                print("initSpeed",command[2])
-                print("maxSpeed",command[3])
-                print("finalSpeed",command[4])
-                print("maxSpeedRot",command[5])
-                self.commandMotorPara( "TURN", command)
-                self.listenPara()
+                payload[2] = payload[1] + payload[2]/100
+                payload = payload[2:]
+                print("timeMove",payload[0], end=" ")
+                print("direction",payload[1], end= " ")
+                print("initSpeed",payload[2], end=" ")
+                print("maxSpeed",payload[3], end=" ")
+                print("finalSpeed",payload[4], end=" ")
+                print("maxSpeedRot",payload[5])
+                self.commandMotorPara( "TURN", payload)
                 
             if action == self.rc.dictCommande["STOP"]:
                 self.commandMotorPara( "STOP", [""])
-                self.listenPara()
-    
+        print("Drive motor finish")
 
 ui = UI()
