@@ -21,14 +21,15 @@ class manageProcess():
     def __init__(self, ui):
         self.ui = ui
         self.fileReader = fileReader()
-        self.fileReader.write("isListenProcess.txt","0")
+        self.fileReader.write("isListenProcess.txt","go")
     
     def run(self):
         while True:
             isListenProcess = self.fileReader.read("isListenProcess.txt")
-            if isListenProcess == "0" :
-                self.fileReader.write("isListenProcess.txt","1")
+            if isListenProcess == "go" :
+                self.fileReader.write("isListenProcess.txt","stop")
                 self.ui.listenPara()
+                
                 
                 
     def createListen(self):
@@ -53,7 +54,7 @@ class Process(multiprocessing.Process):
             print("I'm the listen process with id: {}".format(self.id))
             self.ui.messageReceive = self.ui.rc.listen()
             self.ui.decodeReiceivedMessage()
-            self.fileReader.write("isListenProcess.txt","0")
+            self.fileReader.write("isListenProcess.txt","go")
             
         if self.ui.functionPara == "send":
             print("I'm the send process with id: {}".format(self.id))
@@ -80,7 +81,7 @@ class UI:
         self.oldPayload = []
         self.isListenProcess = False
         
-        self.rc = RadioCommunication.RadioCommuncation(1)
+        self.rc = RadioCommunication.RadioCommuncation(2)
         self.motor = Motor.Motor()
         self.managerProcess = manageProcess(self)
         self.managerProcessPara()
