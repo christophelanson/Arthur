@@ -18,7 +18,8 @@ class RadioCommuncation:
                              "TurnLeft" : 0x12,
                              "TurnRigth" : 0x13,
                              "RUN" : 0x14,
-                             "Back" : 0x15,
+                             "TURN" : 0x15,
+                             "STOP" : 0x16,
                             }# hexa : 0 , 255 , 16 , 17 
 
     def checkMaster(self):
@@ -27,9 +28,9 @@ class RadioCommuncation:
         return False
 
     def readAll(self):
-        while True:
             payload = self.Radio.readAll()
             self.decodeData(payload)
+            return payload
 
     def write(self, listName, data):
         data = self.codeData(data)
@@ -58,17 +59,7 @@ class RadioCommuncation:
                 self.executeCmd(message)
                 
     def executeCmd(self,message):
-        
         message = hex(ord(message))
-        if message == hex(self.dictCommande["TurnLeft"]):
-            print("Turn Left")
-        if message == hex(self.dictCommande["TurnRigth"]):
-            print("Turn Rigth")
-        if message == hex(self.dictCommande["Go"]):
-            print("Go")
-        if message == hex(self.dictCommande["Back"]):
-            print("Back")
-
             
     def convertData(self,data):
         node_id = data[0]
@@ -114,10 +105,8 @@ class RadioCommuncation:
 
 #rc1 = RadioCommuncation(2)
 #while True:
-#    rc1.listen()
+#   rc1.listen()
 
 #rc1 = RadioCommuncation(1)
 #while True:
 #    rc1.send([rc1.dictCommande["Back"]])
-
-
