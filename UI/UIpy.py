@@ -1,5 +1,7 @@
 from tkinter import *
+import tkinter as tk
 from tkinter import ttk
+import sys
 sys.path.insert(0, '../Communication')
 sys.path.insert(0, '../Motor')
 import RadioCommunication
@@ -21,15 +23,14 @@ class manageProcess():
     def __init__(self, ui):
         self.ui = ui
         self.fileReader = fileReader()
-        self.fileReader.write("isListenProcess.txt","go")
+        self.fileReader.write("isListenProcess.txt","0")
     
     def run(self):
         while True:
             isListenProcess = self.fileReader.read("isListenProcess.txt")
-            if isListenProcess == "go" :
-                self.fileReader.write("isListenProcess.txt","stop")
+            if isListenProcess == "0" :
+                self.fileReader.write("isListenProcess.txt","1")
                 self.ui.listenPara()
-                
                 
                 
     def createListen(self):
@@ -54,7 +55,7 @@ class Process(multiprocessing.Process):
             print("I'm the listen process with id: {}".format(self.id))
             self.ui.messageReceive = self.ui.rc.listen()
             self.ui.decodeReiceivedMessage()
-            self.fileReader.write("isListenProcess.txt","go")
+            self.fileReader.write("isListenProcess.txt","0")
             
         if self.ui.functionPara == "send":
             print("I'm the send process with id: {}".format(self.id))
@@ -72,16 +73,15 @@ class UI:
         self.id_process = 0
         self.idCommand = False
         self.idReceived = None
+        self.oldPayload = []
+        self.isListenProcess = False
         self.timeMove = 4
         self.direction = 1
         self.initSpeed = 0
         self.maxSpeed = 60
         self.finalSpeed = 0
         self.maxRotSpeed = 40
-        self.oldPayload = []
-        self.isListenProcess = False
-        
-        self.rc = RadioCommunication.RadioCommuncation(2)
+        self.rc = RadioCommunication.RadioCommuncation(1)
         self.motor = Motor.Motor()
         self.managerProcess = manageProcess(self)
         self.managerProcessPara()
@@ -89,21 +89,34 @@ class UI:
         self.functionPara = ""
         self.commandMotor = ""
         self.messageReceive = ""
-    
+        self.root = tk.Tk()
+        self.frm = ttk.Frame(self.root, padding=10)
+        self.frm.grid()
         if self.isMaster:
-            self.root = Tk()
-            self.frm = ttk.Frame(self.root, padding=10)
-            self.frm.grid()
+            
+            self.timeMove = tk.StringVar(self.root, self.timeMove)
+            self.direction = tk.StringVar(self.root, self.direction)
+            self.initSpeed = tk.StringVar(self.root, self.initSpeed)
+            self.maxSpeed = tk.StringVar(self.root, self.maxSpeed)
+            self.finalSpeed = tk.StringVar(self.root, self.finalSpeed)
+            self.maxRotSpeed = tk.StringVar(self.root, self.maxRotSpeed)
+            
             ttk.Label(self.frm, text="Motor Command!").grid(column=0, row=0)
             ttk.Button(self.frm, text="RUN", command=self.runPara).grid(column=1, row=0)
             ttk.Button(self.frm, text="STOP", command=self.stop).grid(column=1, row=1)
             ttk.Button(self.frm, text="TURN", command=self.turnPara).grid(column=1, row=2)
             ttk.Button(self.frm, text="Quit", command=self.root.destroy).grid(column=1, row=3)
+            
+            ttk.Entry(self.frm, textvariable=self.timeMove).grid(column=2, row=0)
+            ttk.Entry(self.frm, textvariable=self.direction).grid(column=2, row=1)
+            ttk.Entry(self.frm, textvariable=self.initSpeed).grid(column=2, row=2)
+            ttk.Entry(self.frm, textvariable=self.maxSpeed).grid(column=2, row=3)
+            ttk.Entry(self.frm, textvariable=self.finalSpeed).grid(column=2, row=4)
+            ttk.Entry(self.frm, textvariable=self.maxRotSpeed).grid(column=2, row=5)
             self.root.mainloop()
         else:
-            pass
-        
-    
+            self.listenPara()
+
     def generateParaFunction(self, funcName):
         self.functionPara = funcName
         p = Process(self.id_process, self)
@@ -119,12 +132,12 @@ class UI:
     def runPara(self):
         command = []
         command.append(self.rc.dictCommande["RUN"])
-        command.append(int(self.timeMove))
-        command.append(int(round(self.timeMove,2)%1*100))
-        command.append(self.direction)
-        command.append(self.initSpeed)
-        command.append(self.maxSpeed)
-        command.append(self.finalSpeed)
+        command.append(int(self.timeMove.get()))
+        command.append(int(round(float(self.timeMove.get()),2)%1*100))
+        command.append(int(self.direction.get()))
+        command.append(int(self.initSpeed.get()))
+        command.append(int(self.maxSpeed.get()))
+        command.append(int(self.finalSpeed.get()))
         command.append(self.idCommand)
         print("Commande send:",command)
         self.commandMotor = command
@@ -134,13 +147,13 @@ class UI:
     def turnPara(self):
         command = []
         command.append(self.rc.dictCommande["TURN"])
-        command.append(int(self.timeMove))
-        command.append(int(round(self.timeMove,2)%1*100))
-        command.append(self.direction)
-        command.append(self.initSpeed)
-        command.append(self.maxSpeed)
-        command.append(self.finalSpeed)
-        command.append(self.maxRotSpeed)
+        command.append(int(self.timeMove.get()))
+        command.append(int(round(float(self.timeMove.get()),2)%1*100))
+        command.append(int(self.direction.get()))
+        command.append(int(self.initSpeed.get()))
+        command.append(int(self.maxSpeed.get()))
+        command.append(int(self.finalSpeed.get()))
+        command.append(int(self.maxRotSpeed.get()))
         command.append(self.idCommand)
         print("Commande sent:",command)
         self.commandMotor = command
@@ -211,3 +224,4 @@ class UI:
         print("Drive motor finish")
 
 ui = UI()
+
