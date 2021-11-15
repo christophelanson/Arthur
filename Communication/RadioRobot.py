@@ -47,16 +47,21 @@ class RadioRobot:
     def listenChanel(self):
         print("listening..")
         while True:
-            if self.nrf.available():  # keep RX FIFO empty for reception
-                payload_size, pipe_number = (self.nrf.any(), self.nrf.pipe)
-                print("Received", self.nrf.any(), "on pipe", self.nrf.pipe, ":")
-                receiveData = self.nrf.read()
-                payload = []
-                for char in receiveData:
-                    payload.append(chr(char))
-                print(payload)
-                return payload
-
+            try :
+                if self.nrf.available():  # keep RX FIFO empty for reception
+                    payload_size, pipe_number = (self.nrf.any(), self.nrf.pipe)
+                    print("Received", self.nrf.any(), "on pipe", self.nrf.pipe, ":")
+                    receiveData = self.nrf.read()
+                    payload = []
+                    for char in receiveData:
+                        payload.append(chr(char))
+                    print(payload)
+                    return payload
+                
+            except Exception as e:
+                print("Listening just stop")
+                return 0
+                
     def openSpeakChanel(self, dictAddress):
         self.nrf.listen = False
         for name in dictAddress.keys():
@@ -101,6 +106,8 @@ class RadioRobot:
 
     def writeAll(self, data):
         print("Start writing")
+        for name in self.dictAddress.keys():
+            self.nrf.close_rx_pipe(name)
         self.openSpeakChanel(self.dictAddress)
         self.speakChanel(data,self.dictAddress)
 

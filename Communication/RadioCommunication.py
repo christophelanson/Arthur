@@ -14,6 +14,7 @@ class RadioCommunication:
         self.isMaster = self.checkMaster()
         self.requestMessage = ["wantToSpeak"]
         self.receivedMessage = []
+        self.commandToSend = ""
         self.dictCommande = {"startByte": 0x00,
                              "stopByte": 0x40,
                              "wantToSpeak": 0x10,
@@ -27,12 +28,21 @@ class RadioCommunication:
     
     def setUI(self, UI):
         self.UI = UI
+        print("Communication UI set")
         
     def run(self):
         while True:
-            if self.isIdle:
-                messageReceived = self.listen()
-                self.UI.decodeReiceivedMessage(messageReceived)
+            print("while true")
+            try:
+                if self.isIdle:
+                    messageReceived = self.listen()
+                    self.UI.decodeReiceivedMessage(messageReceived)
+                    pass
+            except Exception as e:
+                    print(e.__class__)
+                    print("Command To Send:", self.commandToSend)
+                    self.send(self.commandToSend)
+                    pass
 
     def checkMaster(self):
         return self.Name == 1
