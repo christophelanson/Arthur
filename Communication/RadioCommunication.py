@@ -32,14 +32,17 @@ class RadioCommunication:
         
     def run(self):
         while True:
-            try:
-                if self.isIdle:
-                    messageReceived = self.listen()
-                    self.UI.decodeReiceivedMessage(messageReceived)
-            except Exception as e:
-                    #print(e.__class__)
-                    print("Command To Send:", self.commandToSend)
-                    self.send(self.commandToSend)
+            messageReceived = self.listen()
+            #self.UI.decodeReiceivedMessage(messageReceived)
+#             try:
+#                 if self.isIdle:
+#                     #messageReceived = self.listen()
+#                     #self.UI.decodeReiceivedMessage(messageReceived)
+#                     pass
+#             except Exception as e:
+#                     #print(e.__class__)
+#                     print("Command To Send:", self.commandToSend)
+#                     self.send(self.commandToSend)
 
 
     def checkMaster(self):

@@ -32,13 +32,16 @@ class RadioRobot:
 
         # set the Power Amplifier level to -12 dBm since this test example is
         # usually run with nRF24L01 transceivers in close proximity
-        self.nrf.pa_level = -18
+        self.nrf.pa_level = -12
         
 
     def setIdentity(self, Name):
             dictAddressTx = copy.deepcopy(self.dictAllAddress)
             dictAddressTx.pop(Name)
             self.ownAddress = self.dictAllAddress[Name]
+            print("own", self.ownAddress) 
+            print("dictAddressTx",dictAddressTx)
+            exit(0)
             return dictAddressTx
 
     def openListenChanel(self, dictAddress):
@@ -49,6 +52,7 @@ class RadioRobot:
 
     def listenChanel(self):
         print("listening..")
+        self.nrf.listen = True
         while True:
             #try :
             if self.nrf.available():  # keep RX FIFO empty for reception
@@ -58,6 +62,7 @@ class RadioRobot:
                 payload = []
                 for char in receiveData:
                     payload.append(chr(char))
+                self.nrf.listen = False
                 return payload
                 
             #except Exception as e:
@@ -68,10 +73,11 @@ class RadioRobot:
         print("open speak chanel start")
         self.nrf.listen = False
         self.nrf.open_tx_pipe(self.ownAddress)
-        print("Channel for writing from:", list(self.dictAddress.keys()))
+        print("Channel for writing from:", list(self.ownAddress))
          
     def speakChanel(self, data, dictAddress):
         print("speak chanel")
+        count = 0
         for name in dictAddress.keys():
             payload = data.encode("ascii")
             report = self.nrf.send(payload)
@@ -79,25 +85,27 @@ class RadioRobot:
                 print("Transmission  successfull! ")
             else:
                 print("Transmission failed or timed out")
-#             while not report:
-#                 report = self.nrf.send(payload)
-#                 if report:
-#                     print("Transmission  successfull! ")
-#                 else:
-#                     print("Transmission failed or timed out")
-#                 report = True
-
+            while not report:
+                report = self.nrf.send(payload)
+                if report:
+                    print("Transmission  successfull! ")
+                else:
+                    print("Transmission failed or timed out")
+                count += 1
+                if count > 10:
+                    print("break")
+                    break
+        payload = self.listenChanel()
+        print(payload)
     def read(self, listName):
         dictAddressRead = {}
         for name in listName:
             dictAddressRead[name] = self.dictAddress[name]
-        s#elf.openListenChanel(dictAddressRead)
         payload = self.listenChanel()
         return payload
 
     def readAll(self):
         print("start listening")
-        self.openListenChanel(self.dictAddress)
         payload = self.listenChanel()
         return payload
 
@@ -105,20 +113,11 @@ class RadioRobot:
         dictAddressWrite = {}
         for name in listName:
             dictAddressWrite[name] = self.dictAddress[name]
-        #self.openSpeakChanel(dictAddressWrite)
         self.speakChanel(data,dictAddressWrite)
 
     def writeAll(self, data):
         print("Start writing")
-#         for name in self.dictAddress.keys():
-#             self.nrf.listen = False
-#             print("name",name)
-#             #self.nrf.close_rx_pipe(name)
-        print("Pipe close")
         dictAddress = self.dictAddress
-        print("dictAddress ok")
-        #self.openSpeakChanel(dictAddress)
-        print("Chanel open")
         self.speakChanel(data,self.dictAddress)
 
 
