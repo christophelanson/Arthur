@@ -64,6 +64,8 @@ class Motor:
         return currentSpeedLeft, currentSpeedRight
 
     def driveMotor(self, currentSpeedLeft, currentSpeedRight, timeStep, direction):
+        currentSpeedLeft = currentSpeedLeft * direction
+        currentSpeedRight = currentSpeedRight * direction
         if currentSpeedLeft < 0:
             GPIO.output(self.INA, GPIO.LOW)
         else:
@@ -78,7 +80,7 @@ class Motor:
         self.pwm_ENB.start(abs(currentSpeedRight))
         time.sleep(timeStep)
 
-    def run(self, timeMove, dir, initSpeed, maxSpeed, finalSpeed):
+    def run(self, timeMove, direction, initSpeed, maxSpeed, finalSpeed):
         nominalTime = timeMove - (self.dT * 12)
         currentSpeed = initSpeed
         for i, step in enumerate(self.listStep):
@@ -94,7 +96,7 @@ class Motor:
                     timeStep = nominalTime
                 else:
                     timeStep = self.dT
-                self.driveMotor(currentSpeedLeft, currentSpeedRight, timeStep, dir)
+                self.driveMotor(currentSpeedLeft, currentSpeedRight, timeStep, direction)
         self.stop()
 
         plt.figure()
