@@ -24,13 +24,19 @@ class ManagerProcess:
         self.communication.setUI(self.UI)
 
     def run(self):
-        threadingUI = threading.Thread(name='listen', target=self.UI.runTK())
-        threadingUI.setDaemon(True)
-        threadCommunication = threading.Thread(name='listen', target=self.communication.listen())
+        print("Start run Thread function")
+        threadCommunication = threading.Thread(name='communication', target=self.communication.run)
         threadCommunication.setDaemon(True)
-        threadmotor = threading.Thread(name='listen', target=self.motor.runProcess())
+        print("Communication thread start")
+        threadmotor = threading.Thread(name='motor', target=self.motor.runProcess)
         threadmotor.setDaemon(True)
-
+        print("Motor thread start")
+        
+        self.UI.setThreadId(threadCommunication, threadmotor)
+        threadingUI = threading.Thread(name='UI', target=self.UI.runTK)
+        threadingUI.setDaemon(True)
+        print("UI thread start")
+        
         threadingUI.start()
         threadCommunication.start()
         threadmotor.start()
@@ -40,10 +46,5 @@ class ManagerProcess:
 
 
 if __name__ == "__main__":
-    try:
-
-        managerProcess = ManagerProcess()
-        managerProcess.run()
-
-    except KeyboardInterrupt:
-        print("finished")
+    managerProcess = ManagerProcess()
+    managerProcess.run()
