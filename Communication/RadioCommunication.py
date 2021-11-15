@@ -32,24 +32,22 @@ class RadioCommunication:
         
     def run(self):
         while True:
-            print("while true")
             try:
                 if self.isIdle:
                     messageReceived = self.listen()
                     self.UI.decodeReiceivedMessage(messageReceived)
-                    pass
             except Exception as e:
-                    print(e.__class__)
+                    #print(e.__class__)
                     print("Command To Send:", self.commandToSend)
                     self.send(self.commandToSend)
-                    pass
+
 
     def checkMaster(self):
         return self.Name == 1
 
     def readAll(self):
         payload = self.Radio.readAll()
-        self.decodeData(payload)
+        #self.decodeData(payload)
         return payload
 
     def write(self, listName, data):
