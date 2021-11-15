@@ -40,7 +40,6 @@ class UI:
 
         self.functionPara = ""
         self.commandMotor = ""
-        self.messageReceive = ""
 
     def runTK(self):
         self.root = tk.Tk()
@@ -97,9 +96,9 @@ class UI:
         self.motor.command = DriveMotorCommand
         self.motor.isCommand = True
 
-    def decodeReiceivedMessage(self):
+    def decodeReiceivedMessage(self,messageReceive):
         payload = []
-        for i, data in enumerate(self.messageReceive):
+        for i, data in enumerate(messageReceive):
             payload.append(int(hex(ord(data)), 16))
         if payload[0] != 0 and payload[-1] != 64:
             print("erreur with payload received, first or last char wrong")
@@ -138,4 +137,4 @@ class UI:
         print("Drive motor finish")
 
 
-ui = UI()
+#ui = UI()
