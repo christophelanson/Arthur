@@ -1,21 +1,30 @@
+import sys
+sys.path.insert(0, '../UI')
+sys.path.insert(0, '../Communication')
+sys.path.insert(0, '../Motor')
+
+import UI
+import Motor
+import RadioCommunication
+
 import threading
 import queue
 import time
-import UI
-import Motor
-import Communication
+
+
 
 
 class ManagerProcess:
 
     def __init__(self):
         print("start Manager")
-        self.communication = Communication.RadioCommuncation(1)
+        self.communication = RadioCommunication.RadioCommunication(1)
         self.motor = Motor.Motor()
-        self.UI = UI.UI()
+        self.UI = UI.UI(self.motor, self.communication)
+        self.communication.setUI(self.UI)
 
     def run(self):
-        threadingUI = threading.Thread(name='listen', target=self.ui.runTK())
+        threadingUI = threading.Thread(name='listen', target=self.UI.runTK())
         threadingUI.setDaemon(True)
         threadCommunication = threading.Thread(name='listen', target=self.communication.listen())
         threadCommunication.setDaemon(True)
