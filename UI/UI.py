@@ -3,9 +3,14 @@ from tkinter import ttk
 import sys
 sys.path.insert(0, '../Communication')
 sys.path.insert(0, '../Motor')
+sys.path.insert(0, '../ExceptionFolder')
 import RadioCommunication
 import multiprocessing
 import Motor
+import ExceptionFile
+import threading
+import ctypes
+
 
 
 class fileReader:
@@ -40,7 +45,12 @@ class UI:
 
         self.functionPara = ""
         self.commandMotor = ""
-
+    
+    def setThreadId(self, threadCommunicationId, threadmotorId):
+        self.threadCommunicationId = threadCommunicationId
+        self.threadmotorId = threadmotorId
+        print("Thread Id set up")
+        
     def runTK(self):
         self.root = tk.Tk()
         self.frm = ttk.Frame(self.root, padding=10)
@@ -73,7 +83,7 @@ class UI:
                    int(self.initSpeed.get()), int(self.maxSpeed.get()), int(self.finalSpeed.get()), self.idCommand]
         print("Commande send:", command)
         self.commandMotor = command
-        self.rc.send(command)
+        self.send(command)
         self.idCommand = not self.idCommand
 
     def turnMotorSend(self):
@@ -83,14 +93,34 @@ class UI:
                    int(self.maxRotSpeed.get()), self.idCommand]
         print("Commande sent:", command)
         self.commandMotor = command
-        self.rc.send(command)
+        self.send(command)
         self.idCommand = not self.idCommand
 
     def stopMotorSend(self):
         command = [self.rc.dictCommande["STOP"], self.idCommand]
-        self.rc.send(command)
+        self.send(command)
         self.idCommand = not self.idCommand
-
+        
+    def send(self, command):
+        self.rc.commandToSend = command
+        exception = ExceptionFile.StopListeningSendMessage()
+        Null = 0
+        found = False
+        target_tid = 0
+        for tid, tobj in threading._active.items():
+            if str(self.threadCommunicationId) == str(tobj):
+                found = True
+                print(tid)
+                target_tid = tid
+                break
+        ret = ctypes.pythonapi.PyThreadState_SetAsyncExc(ctypes.c_long(target_tid), ctypes.py_object(exception))
+        if ret == 0:
+            print("Invalid thread ID")
+        if ret > 1 :
+            ctypes.pythonapi.PyThreadState_SetAsyncExc(ctypes.c_long(target_tid), NULL)
+            print("Communication with listen thread failed")
+        print("Communication with listen thread succed")
+        
     def commandMotorReceived(self, funcDriveMotor, DriveMotorCommand):
         self.motor.func = funcDriveMotor
         self.motor.command = DriveMotorCommand
