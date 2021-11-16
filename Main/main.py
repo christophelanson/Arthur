@@ -2,10 +2,12 @@ import sys
 sys.path.insert(0, '../UI')
 sys.path.insert(0, '../Communication')
 sys.path.insert(0, '../Motor')
+sys.path.insert(0, '../Lidar')
 
 import UI
 import Motor
 import RadioCommunication
+import Lidar
 
 import threading
 import queue
@@ -20,7 +22,8 @@ class ManagerProcess:
         print("start Manager")
         self.communication = RadioCommunication.RadioCommunication(1)
         self.motor = Motor.Motor()
-        self.UI = UI.UI(self.motor, self.communication)
+        self.lidar = Lidar.Lidar()
+        self.UI = UI.UI(self.motor, self.communication, self.lidar)
         self.communication.setUI(self.UI)
 
     def run(self):
@@ -32,16 +35,21 @@ class ManagerProcess:
         threadmotor.setDaemon(True)
         print("Motor thread start")
         
+        threadlidar = threading.Thread(name='lidar', target=self.lidar.run)
+        threadlidar.setDaemon(True)
+        
         self.UI.setThreadId(threadCommunication, threadmotor)
         threadingUI = threading.Thread(name='UI', target=self.UI.runTK)
         threadingUI.setDaemon(True)
         print("UI thread start")
         
+        threadlidar.start()
         threadingUI.start()
         threadCommunication.start()
         threadmotor.start()
         threadmotor.join()
         threadCommunication.join()
+        threadlidar.join()
         threadingUI.join()
         
 
