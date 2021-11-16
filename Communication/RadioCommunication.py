@@ -24,6 +24,7 @@ class RadioCommunication:
                              "RUN": 0x14,
                              "TURN": 0x15,
                              "STOP": 0x16,
+                             "SCAN": 0x17,
                              }  # hexa : 0 , 255 , 16 , 17
     
     def setUI(self, UI):
