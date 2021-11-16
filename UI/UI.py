@@ -26,11 +26,12 @@ class fileReader:
 
 class UI:
 
-    def __init__(self, motor, communication, lidar):
+    def __init__(self, motor, communication, lidar, camera):
 
         self.motor = motor
         self.rc = communication
         self.lidar = lidar
+        self.camera = camera
         self.isMaster = True
         self.id_process = 0
         self.idCommand = False
@@ -70,7 +71,8 @@ class UI:
             ttk.Button(self.frm, text="STOP", command=self.stopMotorSend).grid(column=1, row=1)
             ttk.Button(self.frm, text="TURN", command=self.turnMotorSend).grid(column=1, row=2)
             ttk.Button(self.frm, text="SCAN", command=self.scanSend).grid(column=1, row=3)
-            ttk.Button(self.frm, text="Quit", command=self.root.destroy).grid(column=1, row=4)
+            ttk.Button(self.frm, text="PHOTO", command=self.cameraSend).grid(column=1, row=4)
+            ttk.Button(self.frm, text="Quit", command=self.root.destroy).grid(column=1, row=5)
 
             ttk.Entry(self.frm, textvariable=self.timeMove).grid(column=2, row=0)
             ttk.Entry(self.frm, textvariable=self.direction).grid(column=2, row=1)
@@ -82,7 +84,16 @@ class UI:
     
     def incrementFileNb(self):
         self.numeroDeFichier += 1
+    
+    def cameraPhoto(self):
+        self.camera.numeroDeFichier = self.numeroDeFichier
+        self.camera.isCapture = True
         
+    def cameraSend(self):
+        command = [self.rc.dictCommande["PHOTO"]]
+        self.send(command)
+        self.idCommand = not self.idCommand
+    
     def scanLidar(self):
         self.lidar.numeroDeFichier = self.numeroDeFichier
         self.lidar.isScan = True
@@ -93,7 +104,7 @@ class UI:
         self.idCommand = not self.idCommand
         
     def runMotorSend(self):
-        self.incrementFileNb()
+        #self.incrementFileNb()
         command = [self.rc.dictCommande["RUN"], int(self.timeMove.get()),
                    int(round(float(self.timeMove.get()), 2) % 1 * 100), int(self.direction.get()),
                    int(self.initSpeed.get()), int(self.maxSpeed.get()), int(self.finalSpeed.get()), self.idCommand]
@@ -104,7 +115,7 @@ class UI:
         
 
     def turnMotorSend(self):
-        self.incrementFileNb()
+        #self.incrementFileNb()
         command = [self.rc.dictCommande["TURN"], int(self.timeMove.get()),
                    int(round(float(self.timeMove.get()), 2) % 1 * 100), int(self.direction.get()),
                    int(self.initSpeed.get()), int(self.maxSpeed.get()), int(self.finalSpeed.get()),
@@ -162,6 +173,7 @@ class UI:
                 self.scanLidar()
                 
             if action == self.rc.dictCommande["RUN"]:
+                self.incrementFileNb()
                 payload[2] = payload[1] + payload[2] / 100
                 payload = payload[2:]
                 print("timeMove", payload[0], end=" ")
@@ -172,6 +184,7 @@ class UI:
                 self.commandMotorReceived("RUN", payload)
 
             if action == self.rc.dictCommande["TURN"]:
+                self.incrementFileNb()
                 payload[2] = payload[1] + payload[2] / 100
                 payload = payload[2:]
                 print("timeMove", payload[0], end=" ")
