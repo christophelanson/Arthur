@@ -43,7 +43,7 @@ class ManagerProcess:
         threadmotor.join()
         threadCommunication.join()
         threadingUI.join()
-
+        
 
 if __name__ == "__main__":
     managerProcess = ManagerProcess()
