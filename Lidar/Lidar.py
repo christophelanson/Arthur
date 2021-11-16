@@ -55,9 +55,9 @@ class Lidar:
                 if not data_start:
                     data_start = True
             if data_start :
-                self.data.append(x)
-                self.data_dec.append(int(x,16))
-                if len(self.data) > 3 : 
+                data.append(x)
+                #self.data_dec.append(int(x,16))
+                if len(data) > 3 : 
                     LSN = int(data[3],16)*2
                     if len(data) >= LSN + 10:
                         CT = data[2]
