@@ -4,11 +4,15 @@ import csv
 import numpy as np
 import matplotlib.pyplot as plt
 import time
+#import ydlidar
+import PyLidar3
+
 
 class Lidar:
     
     def __init__(self):
         self.ser = serial.Serial(port='/dev/ttyUSB0', baudrate='115200')
+        self.ser.close()
         self.dict_angle_distance = {} # dictionnaire angles et distances classés par paquets angulaire d'amplitude 0,5° : dimension 720 lignes
         self.outputDataList = [] # liste de données collectées sans classement par paquet : dimension 7.200 lignes
         # [angle (degrés), distance (mm), scoreAvant (0 à 5), scoreArrière (0 à 5), scoreDébut objet (-10 à 10), scoreFin objet (-10 à 10), dDébutObjet (0/1), finObjet (0/1)]
@@ -20,7 +24,6 @@ class Lidar:
         self.correctionAngle0 = 192.25 #correction d'angle pour que angle = 0 => avant du robot
         self.numeroDeFichier = 0
         self.isScan = False
-        print("Lidar init")
 
 # fonction de calcul des scores Avant et Arrière, cf. doc protocole Lidar
     def CalculScores(self):
@@ -45,10 +48,14 @@ class Lidar:
         return listScores
     
     def getData(self):
+        self.ser.open()
         # Début de la collecte des données Lidar
         dataCount = 0 # compteur de données collectées (angle, distance)
         data = []
         data_start = False
+        self.outputDataList = []
+        self.listObjets = []
+        self.dict_angle_distance = {}
         while dataCount < self.nbDonneesACollecter :
             x = self.ser.read().hex()
             if x == "aa":
@@ -97,7 +104,8 @@ class Lidar:
                         data = []
                         data_start = False
         print (dataCount, " raw data collected")
-    
+        self.ser.close()
+
     def createOutputDataList(self):
 
         self.outputDataList=np.asarray(self.outputDataList) # convertit la liste en numpy
