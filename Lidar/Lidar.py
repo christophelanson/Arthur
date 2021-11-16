@@ -32,13 +32,13 @@ class Lidar:
                 scoreAvant=5
             else:
                 for j in range(1,6):
-                    if abs(dataAngleDistance[1]-self.outputDataList[i+j][1])<filtreEcartDistance :
+                    if abs(dataAngleDistance[1]-self.outputDataList[i+j][1])<self.filtreEcartDistance :
                         scoreAvant += 1
             if i<=4:
                 scoreArriere = 5
             else:
                 for j in range(1,6):
-                    if abs(dataAngleDistance[1]-self.outputDataList[i-j][1])<filtreEcartDistance:
+                    if abs(dataAngleDistance[1]-self.outputDataList[i-j][1])<self.filtreEcartDistance:
                         scoreArriere += 1
             listScores.append([scoreAvant,scoreArriere])
         listScores=np.asarray(listScores)
@@ -112,12 +112,12 @@ class Lidar:
         # Début de la filtration des données et de la détection d'objets        
         self.outputDataList = self.outputDataList[self.outputDataList[:,0].argsort()] # classe toutes les lignes par première colonne
 
-        listScores = CalculScores(self.outputDataList)
+        listScores = self.CalculScores()
         self.outputDataList = np.concatenate((self.outputDataList,listScores),axis=1)
         # exclut les données avec scoreAvant et score Arriere <=1 (donc conserve ScoreAv+ScoreAr>1) et recalcule les scores
         self.outputDataList = self.outputDataList[self.outputDataList[:,2]+self.outputDataList[:,3]>1 ]
         self.outputDataList = self.outputDataList[:,0:2] # efface les colonnes scoreAvant et scoreArrière pour les recalculer sur les données filtrées
-        listScores = CalculScores(self.outputDataList) 
+        listScores = self.CalculScores() 
         self.outputDataList = np.concatenate((self.outputDataList,listScores),axis=1)
         # calcule scoreDébutObjet et scoreFinObjet (sans la condition sur le max effectuée plus loin)
         listScores2 = listScores[1:,:] # décale d'une ligne en supprimant la première
@@ -141,10 +141,10 @@ class Lidar:
             listFinObjetTemp[listFinObjetTemp != 1000] =0 # force toutes les valeurs différentes de 1.000 à zéro
         listDebutObjet[listDebutObjet < 4]=0
         listDebutObjet[listDebutObjet == 4]=1
-        listDebutObjet[self.outputDataList[:,4] < seuilEcart] = 0 # condition sur le Seuil : met à 0 tous les scores < SeuilEcart
+        listDebutObjet[self.outputDataList[:,4] < self.seuilEcart] = 0 # condition sur le Seuil : met à 0 tous les scores < SeuilEcart
         listFinObjet[listFinObjet < 4]=0
         listFinObjet[listFinObjet == 4]=1
-        listFinObjet[self.outputDataList[:,5] < seuilEcart] = 0 # condition sur le Seuil, idem
+        listFinObjet[self.outputDataList[:,5] < self.seuilEcart] = 0 # condition sur le Seuil, idem
         self.outputDataList = np.concatenate((self.outputDataList,listDebutObjet),axis=1)
         self.outputDataList = np.concatenate((self.outputDataList,listFinObjet),axis=1)
 
@@ -174,11 +174,11 @@ class Lidar:
         #numeroDeFichier = input()
 
         # crée le fichier lidar2.csv des données brutes (taille 7.200 x 2)
-        nomDuFichier = "outputLidarFile" + self.numeroDeFichier + ".csv"
+        nomDuFichier = "../Log/outputLidarFile" + str(self.numeroDeFichier) + ".csv"
         np.savetxt(nomDuFichier, self.outputDataList, fmt= '%.2f', delimiter=",")
 
         # crée le fichier des objets LidarObjects.csv
-        nomDuFichier = "outputObjectsFile" + self.numeroDeFichier + ".csv"
+        nomDuFichier = "../Log/outputObjectsFile" + str(self.numeroDeFichier) + ".csv"
         self.listObjets = np.asarray(self.listObjets) # convertit la liste en numpy
         np.savetxt(nomDuFichier, self.listObjets, fmt= '%.2f', delimiter=",")
 
@@ -192,4 +192,3 @@ class Lidar:
                 self.createOutputDataList()
                 self.isScan = False
             time.sleep(0.1)
-        
