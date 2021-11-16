@@ -69,7 +69,7 @@ class UI:
             ttk.Button(self.frm, text="RUN", command=self.runMotorSend).grid(column=1, row=0)
             ttk.Button(self.frm, text="STOP", command=self.stopMotorSend).grid(column=1, row=1)
             ttk.Button(self.frm, text="TURN", command=self.turnMotorSend).grid(column=1, row=2)
-            tk.Button(self.frm, text="SCAN", command=self.scanLidar).grid(column=1, row=3)
+            ttk.Button(self.frm, text="SCAN", command=self.scanSend).grid(column=1, row=3)
             ttk.Button(self.frm, text="Quit", command=self.root.destroy).grid(column=1, row=4)
 
             ttk.Entry(self.frm, textvariable=self.timeMove).grid(column=2, row=0)
@@ -80,11 +80,20 @@ class UI:
             ttk.Entry(self.frm, textvariable=self.maxRotSpeed).grid(column=2, row=5)
             self.root.mainloop()
     
+    def incrementFileNb(self):
+        self.numeroDeFichier += 1
+        
     def scanLidar(self):
         self.lidar.numeroDeFichier = self.numeroDeFichier
         self.lidar.isScan = True
+    
+    def scanSend(self):
+        command = [self.rc.dictCommande["SCAN"]]
+        self.send(command)
+        self.idCommand = not self.idCommand
         
     def runMotorSend(self):
+        self.incrementFileNb()
         command = [self.rc.dictCommande["RUN"], int(self.timeMove.get()),
                    int(round(float(self.timeMove.get()), 2) % 1 * 100), int(self.direction.get()),
                    int(self.initSpeed.get()), int(self.maxSpeed.get()), int(self.finalSpeed.get()), self.idCommand]
@@ -92,8 +101,10 @@ class UI:
         self.commandMotor = command
         self.send(command)
         self.idCommand = not self.idCommand
+        
 
     def turnMotorSend(self):
+        self.incrementFileNb()
         command = [self.rc.dictCommande["TURN"], int(self.timeMove.get()),
                    int(round(float(self.timeMove.get()), 2) % 1 * 100), int(self.direction.get()),
                    int(self.initSpeed.get()), int(self.maxSpeed.get()), int(self.finalSpeed.get()),
@@ -147,6 +158,9 @@ class UI:
             payload = payload[2:-1]
             action = payload[0]
             print("action", action)
+            if action == self.rc.dictCommande["SCAN"]:
+                self.scanLidar()
+                
             if action == self.rc.dictCommande["RUN"]:
                 payload[2] = payload[1] + payload[2] / 100
                 payload = payload[2:]
