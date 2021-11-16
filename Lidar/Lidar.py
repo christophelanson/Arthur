@@ -3,6 +3,7 @@ import math
 import csv
 import numpy as np
 import matplotlib.pyplot as plt
+import time
 
 class Lidar:
     
