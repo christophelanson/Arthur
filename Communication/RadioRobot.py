@@ -41,20 +41,20 @@ class RadioRobot:
             self.ownAddress = self.dictAllAddress[Name]
             print("own", self.ownAddress) 
             print("dictAddressTx",dictAddressTx)
-            exit(0)
             return dictAddressTx
 
     def openListenChanel(self, dictAddress):
         for name in dictAddress.keys():
-            self.nrf.open_rx_pipe(name, dictAddress[name])
-        self.nrf.listen = True
-        print("Channel for listening from:", list(dictAddress.keys()))
+            self.nrf.open_rx_pipe(1, dictAddress[name]) # comprendre pipe / adresse
 
     def listenChanel(self):
         print("listening..")
+        self.initSpi()
+        self.nrf.clear_status_flags()
+        self.openListenChanel(self.dictAddress)
+        self.openSpeakChanel()
         self.nrf.listen = True
         while True:
-            #try :
             if self.nrf.available():  # keep RX FIFO empty for reception
                 payload_size, pipe_number = (self.nrf.any(), self.nrf.pipe)
                 print("Received", self.nrf.any(), "on pipe", self.nrf.pipe, ":")
@@ -64,39 +64,38 @@ class RadioRobot:
                     payload.append(chr(char))
                 self.nrf.listen = False
                 return payload
-                
-            #except Exception as e:
-             #   print("Listening just stop")
-              #  return 0
-                
+
     def openSpeakChanel(self):
         print("open speak chanel start")
-        self.nrf.listen = False
+        #self.nrf.listen = False
         self.nrf.open_tx_pipe(self.ownAddress)
         print("Channel for writing from:", list(self.ownAddress))
          
     def speakChanel(self, data, dictAddress):
         print("speak chanel")
-        count = 0
-        for name in dictAddress.keys():
-            payload = data.encode("ascii")
+        self.initSpi()
+        self.openListenChanel(self.dictAddress)
+        self.openSpeakChanel()
+        self.nrf.clear_status_flags()
+        self.nrf.listen = False
+        count = 1 
+        payload = data.encode("ascii")
+        report = self.nrf.send(payload)
+        if report:
+            print("Transmission  successfull! ")
+        else:
+            print("Transmission failed or timed out")
+        while not report:
             report = self.nrf.send(payload)
             if report:
                 print("Transmission  successfull! ")
             else:
                 print("Transmission failed or timed out")
-            while not report:
-                report = self.nrf.send(payload)
-                if report:
-                    print("Transmission  successfull! ")
-                else:
-                    print("Transmission failed or timed out")
-                count += 1
-                if count > 10:
-                    print("break")
-                    break
-        payload = self.listenChanel()
-        print(payload)
+            count += 1
+            if count > 10:
+                print("break")
+                break
+
     def read(self, listName):
         dictAddressRead = {}
         for name in listName:

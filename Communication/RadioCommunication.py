@@ -1,5 +1,5 @@
 import RadioRobot
-
+import ExceptionFile
 
 class RadioCommunication:
 
@@ -32,25 +32,19 @@ class RadioCommunication:
         
     def run(self):
         while True:
-            messageReceived = self.listen()
-            #self.UI.decodeReiceivedMessage(messageReceived)
-#             try:
-#                 if self.isIdle:
-#                     #messageReceived = self.listen()
-#                     #self.UI.decodeReiceivedMessage(messageReceived)
-#                     pass
-#             except Exception as e:
-#                     #print(e.__class__)
-#                     print("Command To Send:", self.commandToSend)
-#                     self.send(self.commandToSend)
-
+            try :
+                messageReceived = self.listen()
+                self.UI.decodeReiceivedMessage(messageReceived)
+            except Exception as e:
+                print("Command To Send:", self.commandToSend)
+                self.send(self.commandToSend)
 
     def checkMaster(self):
         return self.Name == 1
 
     def readAll(self):
         payload = self.Radio.readAll()
-        #self.decodeData(payload)
+        self.decodeData(payload)
         return payload
 
     def write(self, listName, data):
@@ -92,7 +86,7 @@ class RadioCommunication:
         self.write([0], data)
 
     def send(self, data):
-        if self.isMaster:
+        if self.isMaster or not self.isMaster:
             self.writeAll(data)
             return True
         else:
