@@ -36,10 +36,10 @@ class UI:
         self.idReceived = None
         self.oldPayload = []
         self.isListenProcess = False
-        self.timeMove = 4
+        self.timeMove = 1
         self.direction = 1
         self.initSpeed = 0
-        self.maxSpeed = 60
+        self.maxSpeed = 30
         self.finalSpeed = 0
         self.maxRotSpeed = 40
 
@@ -110,7 +110,6 @@ class UI:
         for tid, tobj in threading._active.items():
             if str(self.threadCommunicationId) == str(tobj):
                 found = True
-                print(tid)
                 target_tid = tid
                 break
         ret = ctypes.pythonapi.PyThreadState_SetAsyncExc(ctypes.c_long(target_tid), ctypes.py_object(exception))
@@ -140,7 +139,7 @@ class UI:
 
             payload = payload[2:-1]
             action = payload[0]
-            print("action", action)
+            print("action"commandMotorReceived, action)
             if action == self.rc.dictCommande["RUN"]:
                 payload[2] = payload[1] + payload[2] / 100
                 payload = payload[2:]
