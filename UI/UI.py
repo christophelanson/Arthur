@@ -12,7 +12,6 @@ import threading
 import ctypes
 
 
-
 class fileReader:
 
     def read(self, name):
@@ -22,8 +21,15 @@ class fileReader:
     def write(self, name, data):
         with open(name, "w") as fichier:
             fichier.write(data)
-
-
+            
+    def addContent(self, name, data):
+        with open(name, "r") as fichier:
+            oldData = fichier.read()
+        newData = oldData + newData
+        with open(name, "w") as fichier:
+            fichier.write(newData)
+            
+            
 class UI:
 
     def __init__(self, motor, communication, lidar, camera):
@@ -45,7 +51,11 @@ class UI:
         self.finalSpeed = 0
         self.maxRotSpeed = 40
         self.numeroDeFichier = 0
-
+        self.logContent = ""
+        self.fileReader= fileReader()
+        self.pathLogId = self.fileReader.read("../Log/pathLogId.txt")
+        self.fileReader.write("../Log/pathLogId.txt", str(int(self.pathLogId) + 1 ))
+        self.pathLog = "../Log/log/"+self.pathLogId + ".txt"
         self.functionPara = ""
         self.commandMotor = ""
     
@@ -83,7 +93,10 @@ class UI:
             self.root.mainloop()
     
     def incrementFileNb(self):
+        self.logContent == self.numeroDeFichier + self.logContent + "\n"
         self.numeroDeFichier += 1
+        self.fileReader.addContent(self.pathLog, self.logContent)
+        self.logContent = ""
     
     def cameraPhoto(self):
         self.camera.numeroDeFichier = self.numeroDeFichier
@@ -170,7 +183,12 @@ class UI:
             action = payload[0]
             print("action", action)
             if action == self.rc.dictCommande["SCAN"]:
+                self.logContent += " SCAN"
                 self.scanLidar()
+                
+            if action == self.rc.dictCommande["PHOTO"]:
+                self.logContent += " PHOTO"
+                self.cameraPhoto()
                 
             if action == self.rc.dictCommande["RUN"]:
                 self.incrementFileNb()
@@ -181,6 +199,7 @@ class UI:
                 print("initSpeed", payload[2], end=" ")
                 print("maxSpeed", payload[3], end=" ")
                 print("finalSpeed", payload[4], end=" ")
+                self.logContent += " RUN " + payload
                 self.commandMotorReceived("RUN", payload)
 
             if action == self.rc.dictCommande["TURN"]:
@@ -193,6 +212,7 @@ class UI:
                 print("maxSpeed", payload[3], end=" ")
                 print("finalSpeed", payload[4], end=" ")
                 print("maxSpeedRot", payload[5])
+                self.logContent += " TURN " + payload
                 self.commandMotorReceived("TURN", payload)
 
             if action == self.rc.dictCommande["STOP"]:
