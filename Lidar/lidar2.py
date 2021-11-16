@@ -14,6 +14,7 @@ dict_angle_distance = {} # dictionnaire angles et distances classés par paquets
 outputDataList = [] # liste de données collectées sans classement par paquet : dimension 7.200 lignes
 # [angle (degrés), distance (mm), scoreAvant (0 à 5), scoreArrière (0 à 5), scoreDébut objet (-10 à 10), scoreFin objet (-10 à 10), dDébutObjet (0/1), finObjet (0/1)]
 
+nbDonneesACollecter = 7200
 filtreEcartDistance = 100 #mm, écart de distance nécessaire pour changer d'objet
 seuilEcart = 6 # score de discontinuité à atteindre pour détecter un objet (début ou fin), cf. document protocole
 
@@ -40,7 +41,7 @@ def CalculScores(outputDataList):
     return listScores
 
 # Début de la collecte des données Lidar
-while count < 7200 :
+while count < nbDonneesACollecter :
     x = ser.read().hex()
     if x == "aa":
         if not data_start:
@@ -79,7 +80,7 @@ while count < 7200 :
                             angle -= 360
                         if angle >= 360:
                             angle -= 360
-                        if distance > 100 : # mm
+                        if distance > 100 : # mm, exclusion des données pour lesquelles la distance est trop faible
                             count = count +1
                             try :  # construction de dict_angle_distance, assemblage par paquets
                                 list_angle_distance = dict_angle_distance[int(angle*2)]
