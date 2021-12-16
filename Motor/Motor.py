@@ -3,6 +3,7 @@ import time
 import matplotlib.pyplot as plt
 import numpy as np
 import math
+import Gyro
 
 
 class Motor:
@@ -15,9 +16,8 @@ class Motor:
         self.ENB = 13
         self.dT = 0.08
         self.Step = 0
-        self.listStep = [1 / 12, 2 / 12, 3 / 12, 3 / 12, 2 / 12, 1 / 12, 0, -1 / 12, -2 / 12, -3 / 12, -3 / 12, -2 / 12,
-                         -1 / 12]
-        self.correctionRun = 0
+        self.listStepUp = [1 / 12, 2 / 12, 3 / 12, 3 / 12, 2 / 12, 1 / 12]
+        self.listStepDown =  [-1 / 12, -2 / 12, -3 / 12, -3 / 12, -2 / 12,-1 / 12]
         self.correctionTurn = 0
         self.listSpeed = []
         self.listSpeedRight = []
@@ -37,6 +37,9 @@ class Motor:
         self.isCommand = False
         self.func = ""
         self.command = []
+        
+        self.gyro = Gyro()
+        self.startDirection = 0 
 
     def stop(self):
         self.pwm_ENA.stop()
@@ -45,10 +48,15 @@ class Motor:
         self.listSpeedRight.append(0)
         self.listSpeedLeft.append(0)
         self.isStop = False
-
+    
+    def gyro(self):
+        return self.gyro.run("COMPASS")
+    
     def calculateCorrectionRun(self, currentSpeed):
-        currentSpeedRight = currentSpeed * (1 - self.correctionRun)
-        currentSpeedLeft = currentSpeed * (1 + self.correctionRun)
+        currentDirection = self.gyro()
+        correctionRun = self.startDirection - currentDirection # fonction à vérifier
+        currentSpeedRight = currentSpeed * (1 - correctionRun)
+        currentSpeedLeft = currentSpeed * (1 + correctionRun)
         return currentSpeedLeft, currentSpeedRight
 
     def calculateCorrectionTurn(self, currentSpeedLeft, currentSpeedRight):
@@ -68,12 +76,12 @@ class Motor:
         return currentSpeedLeft, currentSpeedRight
 
     def driveMotor(self, currentSpeedLeft, currentSpeedRight, timeStep, direction):
-        if currentSpeedLeft < 0:
+        if currentSpeedLeft * direction < 0:
             GPIO.output(self.INA, GPIO.LOW)
         else:
             GPIO.output(self.INA, GPIO.HIGH)
 
-        if currentSpeedRight < 0:
+        if currentSpeedRight * direction < 0:
             GPIO.output(self.INB, GPIO.LOW)
         else:
             GPIO.output(self.INB, GPIO.HIGH)
@@ -82,8 +90,12 @@ class Motor:
         self.pwm_ENB.start(abs(currentSpeedRight))
         time.sleep(timeStep)
 
-    def run(self, timeMove, dir, initSpeed, maxSpeed, finalSpeed):
+    def run(self, timeMove, direction, initSpeed, maxSpeed, finalSpeed):
+        self.startDirection = self.gyro()
         nominalTime = timeMove - (self.dT * 12)
+        nbDtNominalTime = int(nominalTime / self.dt)
+        addzero = list(np.zeros((nbDtNominalTime)))
+        self.listStep = self.listStepUp + addzero + self.listStepDown
         currentSpeed = initSpeed
         for i, step in enumerate(self.listStep):
             if self.isStop:
@@ -91,11 +103,11 @@ class Motor:
                 break
             else:
                 currentSpeed, currentSpeedLeft, currentSpeedRight = self.calculateSpeedRun(i, currentSpeed, maxSpeed)
-                self.listSpeed.append(currentSpeed)
-                self.listSpeedRight.append(currentSpeedRight)
-                self.listSpeedLeft.append(currentSpeedLeft)
-                timeStep = nominalTime if self.listStep[i] == 0 else self.dT
-                self.driveMotor(currentSpeedLeft, currentSpeedRight, timeStep, dir)
+                #self.listSpeed.append(currentSpeed)
+                #self.listSpeedRight.append(currentSpeedRight)
+                #self.listSpeedLeft.append(currentSpeedLeft)
+                #timeStep = nominalTime if self.listStep[i] == 0 else self.dT
+                self.driveMotor(currentSpeedLeft, currentSpeedRight, self.dT, direction)
         self.stop()
 
         plt.figure()
@@ -130,8 +142,7 @@ class Motor:
                 self.stop()
                 break
             else:
-                currentSpeedLeft, currentSpeedRight = self.calculateSpeedTurn(i, currentSpeedLeft, currentSpeedRight,
-                                                                              speedLeft, speedRight)
+                currentSpeedLeft, currentSpeedRight = self.calculateSpeedTurn(i, currentSpeedLeft, currentSpeedRight, speedLeft, speedRight)
                 self.listSpeedRight.append(currentSpeedRight)
                 self.listSpeedLeft.append(currentSpeedLeft)
                 timeStep = nominalTime if self.listStep[i] == 0 else self.dT
@@ -157,16 +168,20 @@ class Motor:
                 self.isCommand = False
             time.sleep(0.1)
 
-#motor = Motor()
-# motor.stop()
-#motor.run(3, 1, 0, 30, 0)
-#motor.turn(1, 1, 0, 0, 0, 360)
-# try:
-#     pass
-# except KeyboardInterrupt:
-#     motor.stop()
-#     GPIO.cleanup()
-#
-#motor.stop()
-#GPIO.cleanup()
+
+if __name__ == "__main__":
+    motor = Motor()
+    #motor.run(6, 1, 0, 40, 0)
+    motor.turn(4, 1, 0, 40, 0, 0)
+
+
+    # motor.stop()
+    # try:
+    #     pass
+    # except KeyboardInterrupt:
+    #     motor.stop()
+    #     GPIO.cleanup()
+    #
+    #motor.stop()
+    #GPIO.cleanup()
 
