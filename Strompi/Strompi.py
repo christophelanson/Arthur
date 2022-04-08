@@ -1,6 +1,9 @@
 import serial
 import os
 from time import sleep
+import RPi.GPIO as GPIO
+GPIO.setmode(GPIO.BCM)
+GPIO.setup(23, GPIO.IN, pull_up_down=GPIO.PUD_UP)  
 
 
 class Strompi:
@@ -38,9 +41,14 @@ class Strompi:
 
             sleep(2)
             os.system("sudo shutdown -h now")
-            
     
+    def run(self):
+        GPIO.wait_for_edge(23, GPIO.FALLING)
+        GPIO.wait_for_edge(23, GPIO.FALLING)
+        self.shutdown()
+ 
+ 
 if __name__ == "__main__":
     
     strompi = Strompi()
-    strompi.shutdown()
+    strompi.run()

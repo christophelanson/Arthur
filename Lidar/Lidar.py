@@ -2,7 +2,7 @@ import serial
 import math
 import csv
 import numpy as np
-import matplotlib.pyplot as plt
+#import matplotlib.pyplot as plt
 import time
 #import ydlidar
 import PyLidar3
@@ -10,7 +10,8 @@ import PyLidar3
 
 class Lidar:
     
-    def __init__(self):
+    def __init__(self, messageRouter):
+        self.messageRouter = messageRouter
         self.ser = serial.Serial(port='/dev/ttyUSB0', baudrate='115200')
         self.ser.close()
         self.dict_angle_distance = {} # dictionnaire angles et distances classés par paquets angulaire d'amplitude 0,5° : dimension 720 lignes

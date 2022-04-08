@@ -1,17 +1,26 @@
 import tkinter as tk
 from tkinter import ttk
 import sys
-sys.path.insert(0, '../Communication')
-sys.path.insert(0, '../Motor')
-sys.path.insert(0, '../ExceptionFolder')
-import RadioCommunication
+from HardwareHandler.HardwareHandler import HardwareHandler
+
+from Message.MessageRouter import MessageRouter
+sys.path.insert(0, 'Communication')
+sys.path.insert(0, 'Motor')
+sys.path.insert(0, 'ExceptionFolder')
+sys.path.insert(0, 'HardwareHandler')
+#import RadioCommunication
 import multiprocessing
 import Motor
 import ExceptionFile
 import threading
 import ctypes
+from colorama import Fore 
+from PyQt5.QtCore import *
+from PyQt5.QtGui import *
+from PyQt5.QtWidgets import *
+from Mqtt import Mqtt
 
-
+        
 class fileReader:
 
     def read(self, name):
@@ -20,7 +29,7 @@ class fileReader:
 
     def write(self, name, data):
         with open(name, "w") as fichier:
-            fichier.write(data)
+                    fichier.write(data)
             
     def addContent(self, name, data):
         with open(name, "r") as fichier:
@@ -29,15 +38,17 @@ class fileReader:
         with open(name, "w") as fichier:
             fichier.write(newData)
             
-            
-class UI:
 
-    def __init__(self, motor, communication, lidar, camera):
 
-        self.motor = motor
-        self.rc = communication
-        self.lidar = lidar
-        self.camera = camera
+
+class UI(QRunnable):
+
+    def __init__(self, hardwareHandler:HardwareHandler, hardwareId):
+        super(UI, self).__init__()
+
+        self.hardwareName ="ui"
+        self.hardwareId = hardwareId
+        self.hardwareHandler = hardwareHandler
         self.isMaster = True
         self.id_process = 0
         self.idCommand = False
@@ -53,45 +64,79 @@ class UI:
         self.numeroDeFichier = 0
         self.logContent = ""
         self.fileReader= fileReader()
-        self.pathLogId = self.fileReader.read("../Log/pathLogId.txt")
-        self.fileReader.write("../Log/pathLogId.txt", str(int(self.pathLogId) + 1 ))
-        self.pathLog = "../Log/log/"+self.pathLogId + ".txt"
+        self.pathLogId = self.fileReader.read("Log/pathLogId.txt")
+        self.fileReader.write("Log/pathLogId.txt", str(int(self.pathLogId) + 1 ))
+        self.pathLog = "Log/log/"+self.pathLogId + ".txt"
         self.functionPara = ""
         self.commandMotor = ""
+        self.listChannel = ["all"]
+        self.mqtt = Mqtt.Mqtt(hardwareName=self.hardwareName, on_message=self.on_message, listChannel=self.listChannel)
+
+
+    def on_message(self, client, data, message):
+        print("message topic:", message.topic)
+        print("message", str(message.payload.decode()))
     
+    def get(self, command):
+        if command == "getState":
+            return self.state
+
     def setThreadId(self, threadCommunicationId, threadmotorId):
         self.threadCommunicationId = threadCommunicationId
         self.threadmotorId = threadmotorId
         print("Thread Id set up")
+
+    @pyqtSlot()  
+    def run(self):
+        layout = QVBoxLayout()
+        b = QPushButton("get Motor State")
+        b.pressed.connect(self.getState)
+        w = QWidget()
+        w.setLayout(layout)
+        self.setCentralWidget(w)
+        self.show()
+      
+    def getState(self):
+        self.mqtt.client.publish("all","get state")
+
+    def sendCommand(self):
+
+        receiver = 2
+        hardware = "motor"
+        commandType = "straight"
+        command = self.createMoveCommand(commandType)
         
-    def runTK(self):
-        self.root = tk.Tk()
-        self.frm = ttk.Frame(self.root, padding=10)
-        self.frm.grid()
-        if self.isMaster:
-            self.timeMove = tk.StringVar(self.root, self.timeMove)
-            self.direction = tk.StringVar(self.root, self.direction)
-            self.initSpeed = tk.StringVar(self.root, self.initSpeed)
-            self.maxSpeed = tk.StringVar(self.root, self.maxSpeed)
-            self.finalSpeed = tk.StringVar(self.root, self.finalSpeed)
-            self.maxRotSpeed = tk.StringVar(self.root, self.maxRotSpeed)
-
-            ttk.Label(self.frm, text="Motor Command!").grid(column=0, row=0)
-            ttk.Button(self.frm, text="RUN", command=self.runMotorSend).grid(column=1, row=0)
-            ttk.Button(self.frm, text="STOP", command=self.stopMotorSend).grid(column=1, row=1)
-            ttk.Button(self.frm, text="TURN", command=self.turnMotorSend).grid(column=1, row=2)
-            ttk.Button(self.frm, text="SCAN", command=self.scanSend).grid(column=1, row=3)
-            ttk.Button(self.frm, text="PHOTO", command=self.cameraSend).grid(column=1, row=4)
-            ttk.Button(self.frm, text="Quit", command=self.root.destroy).grid(column=1, row=5)
-
-            ttk.Entry(self.frm, textvariable=self.timeMove).grid(column=2, row=0)
-            ttk.Entry(self.frm, textvariable=self.direction).grid(column=2, row=1)
-            ttk.Entry(self.frm, textvariable=self.initSpeed).grid(column=2, row=2)
-            ttk.Entry(self.frm, textvariable=self.maxSpeed).grid(column=2, row=3)
-            ttk.Entry(self.frm, textvariable=self.finalSpeed).grid(column=2, row=4)
-            ttk.Entry(self.frm, textvariable=self.maxRotSpeed).grid(column=2, row=5)
-            self.root.mainloop()
+        Instruction = self.messageRouter.route(receiver, hardware, command, isSet=True)
+        
     
+    def createMoveCommand(commandType):
+        
+        if commandType == "straight":
+            command = [dictCommande["RUN"], int(self.timeMove.get()),
+                       int(round(float(self.timeMove.get()), 2) % 1 * 100), int(self.direction.get()),
+                       int(self.initSpeed.get()), int(self.maxSpeed.get()), int(self.finalSpeed.get())]
+            
+        if commandType == "turn":
+            command = [dictCommande["TURN"], int(self.timeMove.get()),
+                   int(round(float(self.timeMove.get()), 2) % 1 * 100), int(self.direction.get()),
+                   int(self.initSpeed.get()), int(self.maxSpeed.get()), int(self.finalSpeed.get()),
+                   int(self.maxRotSpeed.get())]
+            
+        print(f"{Fore.GREEN}INFO (UI) -> {commandType} command '{command}' created")
+        
+        return command
+    
+    def getMotorState(self):
+        senderName  = self.messageRouter.node
+        receiverName = 2
+        hardwareName = "motor"
+        command = "getState"
+        motorState = self.messageRouter.route(senderName=senderName, receiverName=receiverName, hardwareName=hardwareName, command=command, isReturn=1, channel="radio")
+        print(f"{Fore.BLUE}DEBUG (UI) -> motor state {motorState}")
+
+    def runMotorSend(self):
+        pass
+
     def incrementFileNb(self):
         self.logContent == self.numeroDeFichier + self.logContent + "\n"
         self.numeroDeFichier += 1
@@ -116,16 +161,16 @@ class UI:
         self.send(command)
         self.idCommand = not self.idCommand
         
-    def runMotorSend(self):
-        #self.incrementFileNb()
-        command = [self.rc.dictCommande["RUN"], int(self.timeMove.get()),
-                   int(round(float(self.timeMove.get()), 2) % 1 * 100), int(self.direction.get()),
-                   int(self.initSpeed.get()), int(self.maxSpeed.get()), int(self.finalSpeed.get()), self.idCommand]
-        print("Commande send:", command)
-        self.commandMotor = command
-        self.send(command)
-        self.idCommand = not self.idCommand
-        
+#     def runMotorSend(self):
+#         #self.incrementFileNb()
+#         command = [self.rc.dictCommande["RUN"], int(self.timeMove.get()),
+#                    int(round(float(self.timeMove.get()), 2) % 1 * 100), int(self.direction.get()),
+#                    int(self.initSpeed.get()), int(self.maxSpeed.get()), int(self.finalSpeed.get()), self.idCommand]
+#         print("Commande send:", command)
+#         self.commandMotor = command
+#         self.send(command)
+#         self.idCommand = not self.idCommand
+#         
 
     def turnMotorSend(self):
         #self.incrementFileNb()

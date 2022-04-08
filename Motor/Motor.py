@@ -1,14 +1,22 @@
 import RPi.GPIO as GPIO
 import time
-import matplotlib.pyplot as plt
 import numpy as np
-import math
-import Gyro
+from Message.MessageRouter import MessageRouter
+from PyQt5.QtCore import *
+from PyQt5.QtGui import *
+from PyQt5.QtWidgets import *
+from Mqtt import Mqtt
+  
+class Motor(QRunnable):
 
-
-class Motor:
-
-    def __init__(self):
+    def __init__(self, messageRouter:MessageRouter, hardwareId):
+        super(Motor, self).__init__()
+        self.hardwareName = "motor"
+        self.hardwareId = hardwareId
+        self.messageRouter = messageRouter
+        self.isCommand = False
+        self.command = []
+        
         self.isStop = False
         self.INA = 20
         self.INB = 19
@@ -33,13 +41,33 @@ class Motor:
         # Set the PWM pin and frequency is 2000hz
         self.pwm_ENA = GPIO.PWM(self.ENA, 2000)
         self.pwm_ENB = GPIO.PWM(self.ENB, 2000)
+        #self.gyro = Gyro.Compass()
+        self.startDirection = 0
+        self.state = "init"
 
-        self.isCommand = False
-        self.func = ""
-        self.command = []
-        
-        self.gyro = Gyro()
-        self.startDirection = 0 
+        self.listChannel = ["all"]
+        self.mqtt = Mqtt.Mqtt(hardwareName=self.hardwareName, on_message=self.on_message, listChannel=self.listChannel)
+
+
+    def on_message(self, client, data, message):
+        print("message topic:", message.topic)
+        print("message", str(message.payload.decode()))
+
+
+    @pyqtSlot()
+    def run(self):
+        while True:
+            pass
+            #if self.isCommand:
+             #   self.executeCommand()
+             #   self.isCommand = False
+            #time.sleep(0.1)
+            #self.state = "ready"    def get(self, command):
+    
+    def get(self, command):
+        if command == "getState":
+            return self.state
+
 
     def stop(self):
         self.pwm_ENA.stop()
@@ -48,12 +76,13 @@ class Motor:
         self.listSpeedRight.append(0)
         self.listSpeedLeft.append(0)
         self.isStop = False
+        self.state = "stop"
     
-    def gyro(self):
-        return self.gyro.run("COMPASS")
+    def gyro(self,command):
+        return self.messageRouter.route(senderName=self.node, receiverName=self.node, hardware="gyro", command=command, isReturn=False, channel="own")
     
     def calculateCorrectionRun(self, currentSpeed):
-        currentDirection = self.gyro()
+        currentDirection = self.gyro(command="COMPASS")
         correctionRun = self.startDirection - currentDirection # fonction à vérifier
         currentSpeedRight = currentSpeed * (1 - correctionRun)
         currentSpeedLeft = currentSpeed * (1 + correctionRun)
@@ -90,7 +119,8 @@ class Motor:
         self.pwm_ENB.start(abs(currentSpeedRight))
         time.sleep(timeStep)
 
-    def run(self, timeMove, direction, initSpeed, maxSpeed, finalSpeed):
+    def move(self, timeMove, direction, initSpeed, maxSpeed, finalSpeed):
+        self.state = "running"
         self.startDirection = self.gyro()
         nominalTime = timeMove - (self.dT * 12)
         nbDtNominalTime = int(nominalTime / self.dt)
@@ -110,12 +140,8 @@ class Motor:
                 self.driveMotor(currentSpeedLeft, currentSpeedRight, self.dT, direction)
         self.stop()
 
-        plt.figure()
-        plt.plot(self.listSpeed)
-        plt.plot(self.listSpeedRight)
-        plt.plot(self.listSpeedLeft)
-
     def turn(self, timeMove, direction, initSpeed, maxSpeed, finalSpeed, maxRotSpeed):
+        self.state = "turning"
         speedLeft = maxSpeed + maxRotSpeed
         speedRight = maxSpeed - maxRotSpeed
 
@@ -153,21 +179,16 @@ class Motor:
        # plt.plot(self.listSpeedRight)
         #plt.plot(self.listSpeedLeft)
 
-    def decoderCommand(self):
-        if self.func == "RUN":
-            self.run(self.command[0], self.command[1], self.command[2], self.command[3], self.command[4])
-        if self.func == "TURN":
-            self.turn(self.command[0], self.command[1], self.command[2], self.command[3], self.command[4], self.command[5])
-        if self.func == "STOP":
+    def executeCommand(self):
+        action = self.command[0]
+        self.payload = self.command[1:]
+        if action == self.messageRouter.dictCommand["RUN"]:
+            self.move(self.payload[0], self.payload[1], self.payload[2], self.payload[3], self.payload[4])
+        if action == self.messageRouter.dictCommand["TURN"]:
+            self.move(self.payload[0], self.payload[1], self.payload[2], self.payload[3], self.payload[4], self.payload[5])
+        if action == self.messageRouter.dictCommand["STOP"]:
             self.isStop = True
-
-    def runProcess(self):
-        while True:
-            if self.isCommand:
-                self.decoderCommand()
-                self.isCommand = False
-            time.sleep(0.1)
-
+            
 
 if __name__ == "__main__":
     motor = Motor()

@@ -1,79 +1,60 @@
 import sys
-sys.path.insert(0, '../UI')
-sys.path.insert(0, '../Communication')
-sys.path.insert(0, '../Motor')
-sys.path.insert(0, '../Lidar')
-sys.path.insert(0, '../Camera')
+import json
+from colorama import Fore  #Permet de print en couleur
+from PyQt5.QtCore import *
+from PyQt5.QtGui import *
+from PyQt5.QtWidgets import *
 
-import UI
+sys.path.append(".")
+from HardwareHandler import HardwareHandler #Permet de creer un hardware et d'executer son code en //, les hardwares fonctionnelles sont stockés dans un dictionnaire
+from UI import UI  #Interface graphique
 import Motor
-import RadioCommunication
-import Lidar
-import Camera
-
-import threading
-import queue
-import time
+from Lidar import Lidar
+from Camera import Camera
+from Gyro import Gyro
+from Communication import RadioRobot
+from Message import MessageRouter
 
 
-
-
-class ManagerProcess:
+class Main(QMainWindow):
 
     def __init__(self):
-        print("start Manager")
-        self.communication = RadioCommunication.RadioCommunication(1)
-        self.motor = Motor.Motor()
-        self.camera = Camera.Camera()
-        self.isLidar = False
-        try:
-            self.lidar = Lidar.Lidar()
-            self.isLidar = True
-        except Exception as e:
-            
-            print(e)
-        if self.isLidar:
-            self.UI = UI.UI(self.motor, self.communication, self.lidar, self.camera)
-        else:
-            self.UI = UI.UI(self.motor, self.communication, None, self.camera)
-        self.communication.setUI(self.UI)
+        super(Main, self).__init__()
+        
+        with open('Main/idRobot.json') as f: #Permet de recuperer l'uinque ID associé a la carte
+            idRobot = json.load(f)
+        print(f"{Fore.GREEN}INFO (main) -> Initialising {idRobot}")
+        # créer chaque hardware
+        self.hardwareHandler = HardwareHandler.HardwareHandler()
+        #self.messageRouter = MessageRouter.MessageRouter(node=idRobot["node"], hardwareHandler=self.hardwareHandler)
+        # 1er paramètre : nom du hardware, 2 ème paramètre class du hardware, 3 ème paramètre paramètre d'init de la classe
+        hardwareId = 0
+        #self.hardwareHandler.addHardware("radio", RadioRobot.RadioRobot, idRobot["node"], self.hardwareHandler, hardwareId)
+        #hardwareId += 1
+        self.hardwareHandler.addHardware("motor", Motor.Motor, self.hardwareHandler, hardwareId)
+        #hardwareId += 1
+        #self.hardwareHandler.addHardware("camera", Camera.Camera, self.hardwareHandler, hardwareId)
+        #hardwareId += 1
+        #self.hardwareHandler.addHardware("lidar", Lidar.Lidar, self.hardwareHandler, hardwareId)
+        #hardwareId += 1
+        #self.hardwareHandler.addHardware("gyro", Gyro.Compass, self.hardwareHandler, hardwareId)
+        hardwareId += 1
+        self.hardwareHandler.addHardware("ui", UI.UI, self.hardwareHandler, hardwareId)
 
-    def run(self):
-        print("Start run Thread function")
-        threadCommunication = threading.Thread(name='communication', target=self.communication.run)
-        threadCommunication.setDaemon(True)
-        print("Communication thread start")
-        threadmotor = threading.Thread(name='motor', target=self.motor.runProcess)
-        threadmotor.setDaemon(True)
-        print("Motor thread start")
+        #self.messageRouter.updateHardware()
+
+        self.hardwareHandler.runThreadHardware()
+        #self.communication.setUI(self.UI)
+
+    #def run(self):
         
-        threadcamera = threading.Thread(name='camera', target=self.camera.run)
-        threadcamera.setDaemon(True)
-        
-        if self.isLidar:
-            threadlidar = threading.Thread(name='lidar', target=self.lidar.run)
-            threadlidar.setDaemon(True)
-        
-        self.UI.setThreadId(threadCommunication, threadmotor)
-        threadingUI = threading.Thread(name='UI', target=self.UI.runTK)
-        threadingUI.setDaemon(True)
-        print("UI thread start")
-        
-        if self.isLidar:
-            threadlidar.start()
-        threadingUI.start()
-        threadCommunication.start()
-        threadmotor.start()
-        threadcamera.start()
-        
-        threadmotor.join()
-        threadCommunication.join()
-        threadcamera.join()
-        if self.isLidar:
-            threadlidar.join()
-        threadingUI.join()
+     #   self.hardwareHandler.runThreadHardware()
+        # lance chaque hardware dans un thread
+      #  for thread in self.hardwareHandler.dictThread.keys():
+       #     self.hardwareHandler.dictThread[thread].join()
         
 
 if __name__ == "__main__":
-    managerProcess = ManagerProcess()
-    managerProcess.run()
+    app = QApplication([])
+    windows = Main()
+    app.exec_()

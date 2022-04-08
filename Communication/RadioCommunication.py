@@ -3,10 +3,10 @@ import ExceptionFile
 
 class RadioCommunication:
 
-    def __init__(self, Name):
+    def __init__(self, name):
 
-        self.Name = Name
-        self.Radio = RadioRobot.RadioRobot(Name)
+        self.name = name
+        self.Radio = RadioRobot.RadioRobot(name)
         self.isIdle = True
         self.isSilent = False
         self.isReceiving = False
@@ -32,13 +32,7 @@ class RadioCommunication:
         print("Communication UI set")
         
     def run(self):
-        while True:
-            try :
-                messageReceived = self.listen()
-                self.UI.decodeReiceivedMessage(messageReceived)
-            except Exception as e:
-                print("Command To Send:", self.commandToSend)
-                self.send(self.commandToSend)
+        pass
 
     def checkMaster(self):
         return self.Name == 1
@@ -117,6 +111,11 @@ class RadioCommunication:
         self.decodeData(data)
         return data
 
+
+if __name__ == "__main__":
+    
+    rc1 = RadioCommuncation(2)
+    
 # rc1 = RadioCommuncation(2)
 # while True:
 #   rc1.listen()

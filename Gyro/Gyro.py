@@ -8,11 +8,29 @@ AddressROLL = 0x05
 
 class Compass:
 
-    def __init__(self):
+    def __init__(self, messageRouter):
+        self.messageRouter = messageRouter
+        self.hardwareName = "Gyro"
+        self.state = "ready"
         self.bus = smbus.SMBus(1) 
         self.Device_Address = 0x60  
         self.bus.write_byte_data(self.Device_Address, 0, 1)
-
+    
+    def get(self, command):
+        if command == "state":
+            return self.state
+        if command == "COMPASS":
+            return self.readRegister16bits(AddressCOMPASS)/10
+            #print("Angle compass:", compass)
+        elif command == "PITCH":
+            return self.readRegister8bits(AddressPITCH)
+            #print("Pitch :", compass)
+        elif command == "ROLL":
+            return self.readRegister8bits(AddressROLL)
+        else:
+            print("Unknow argument:", command)
+            return None
+        
     def readRegister16bits(self, addr):        
             high = self.bus.read_byte_data(self.Device_Address, addr)
             low = self.bus.read_byte_data(self.Device_Address, addr+1)
@@ -25,22 +43,8 @@ class Compass:
         return self.bus.read_byte_data(self.Device_Address, addr)
        
 
-    def run(self, arg):
-        if arg == "COMPASS":
-            return self.readRegister16bits(AddressCOMPASS)/10
-            #print("Angle compass:", compass)
-        elif arg == "PITCH":
-            return self.readRegister8bits(AddressPITCH)
-            #print("Pitch :", compass)
-        elif arg == "ROLL":
-            return self.readRegister8bits(AddressROLL)
-        else:
-            print("Unknow argument:", arg)
-            return None
-
-
 if __name__ == "__main__":
     
-    compass = Compass()
+    compass = Compass(None)
     compass.run()
     
