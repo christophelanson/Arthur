@@ -2,7 +2,7 @@ import os
 from PyQt5.QtCore import *
 from PyQt5.QtGui import *
 from PyQt5.QtWidgets import *
-
+print("hello")
 class Camera(QRunnable):
     
     def __init__(self, messageRouter, hardwareId):
@@ -27,3 +27,4 @@ class Camera(QRunnable):
             if self.isCapture:
                 self.capture()
                 self.isCapture = False
+
