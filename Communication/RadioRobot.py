@@ -1,7 +1,3 @@
-# message structure:
-# [0] : command
-# [1:] : payload
-
 from circuitpython_nrf24l01.rf24 import RF24
 import board
 import digitalio
@@ -12,10 +8,10 @@ import RPi.GPIO as GPIO
 from colorama import Fore
 import sys
 from Message.MessageRouter import MessageRouter
+from Mqtt import Mqtt
 
 
 GPIO.setmode(GPIO.BCM)
-
 
 class RadioRobot:
 
@@ -33,27 +29,25 @@ class RadioRobot:
         self.command = []
         self.state = "listening"
         self.isWriting = False
-        
-    def runPara(self):
-        
-        while True:
-            if self.isCommand:
-                if self.command[0] == self.messageRouter.dictCommand["SEND"]:
-                    self.state = "writing"
-                    self.isWriting = True
-                    payload = self.command[1:]
-                    self.write(payload)
-                self.isCommand = False
+        self.listChannel = ["all", "message radio received"]
+        self.mqtt = Mqtt.Mqtt(hardwareName=self.hardwareName, on_message=self.on_message, listChannel=self.listChannel)
+
+    def on_message(self, client, data, message):
+        messageData = str(message.payload.decode())
+        print("message topic:", message.topic)
+        print("message", str(message.payload.decode()))
+        if messageData == "SEND":
+            self.state = "writing"
+            self.isWriting = True
+            self.write(messageData)
+
+    @pyqtSlot()
+    def run(self):
+        print(f"{Fore.GREEN}INFO -> Radio Robot running ")
                 
     def get(self,command):
         if command == "state":
-            return self.state
-        
-       # if self.command[0] == MessageRouter.dictCommand["Send"]:
-        #        payload = command[1:]
-         #       self.write(payload)
-          #      while True:
-                    
+            return self.state 
         return None 
                     
     def setIdentity(self, node):
@@ -83,30 +77,14 @@ class RadioRobot:
         GPIO.setup(self.radioIrqPin, GPIO.IN, pull_up_down=GPIO.PUD_UP)
         GPIO.add_event_detect(self.radioIrqPin, GPIO.FALLING, callback=self.read)
         
-
     def read(self, event):
         if not self.isWriting:
             print("Received", self.nrf.any(), "on pipe", self.nrf.pipe, ":")
             messageReceived = self.nrf.read()
-            self.messageRouter.unroute(messageReceived, 'radio')
-            
-#             payload = string(messageRadio[2:])
-#             hardwareName = payload[0]
-#             command = payload[1]
-#             payload = payload[2:]
-#             if receiver == self.node:
-#                 if isGet and sender != self.node :
-#                     result = self.messageRouter.route(self.node, hardwareName, command, isGet)
-#                     self.messageRouter.route(sender, 'radio', result, isSet)
-#                 else:
-#                     self.messageRouter.route(self.node, hardwareName, command)
+            self.mqtt.client.publish("message radio received", messageReceived)
 
     def write(self, data):
         print(f"{Fore.GREEN}INFO (radio) -> Start sending the payload {data} to {list(self.dictAddress.keys())}")
-        #self.initSpi()
-        #self.openListenChanel(self.dictAddress)
-        #self.openSpeakChanel()
-        #self.nrf.clear_status_flags()
         self.nrf.listen = False
         payload = data.encode("ascii")
         report = self.nrf.send(buf=payload, ask_no_ack=False, force_retry=100, send_only=False)
@@ -114,7 +92,6 @@ class RadioRobot:
             print(f"{Fore.GREEN}INFO -> Transmission  successfull! ")
         else:
             print(f"{Fore.GREEN}INFO -> Transmission failed or timed out")
-            #self.messageRouter.unroute(messageReceived, 'radio')
         self.nrf.listen = True
         self.state = "listening"
         self.isWriting = False

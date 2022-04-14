@@ -41,7 +41,7 @@ class fileReader:
 
 
 
-class UI(QRunnable):
+class UI(QRunnable, ):
 
     def __init__(self, hardwareHandler:HardwareHandler, hardwareId):
         super(UI, self).__init__()
@@ -88,13 +88,7 @@ class UI(QRunnable):
 
     @pyqtSlot()  
     def run(self):
-        layout = QVBoxLayout()
-        b = QPushButton("get Motor State")
-        b.pressed.connect(self.getState)
-        w = QWidget()
-        w.setLayout(layout)
-        self.setCentralWidget(w)
-        self.show()
+        pass
       
     def getState(self):
         self.mqtt.client.publish("all","get state")

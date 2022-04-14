@@ -1,19 +1,19 @@
-import RPi.GPIO as GPIO
+from fake_rpi.RPi import GPIO
 import time
 import numpy as np
-from Message.MessageRouter import MessageRouter
 from PyQt5.QtCore import *
 from PyQt5.QtGui import *
 from PyQt5.QtWidgets import *
 from Mqtt import Mqtt
   
+  
 class Motor(QRunnable):
 
-    def __init__(self, messageRouter:MessageRouter, hardwareId):
+    def __init__(self, hardwareId):
         super(Motor, self).__init__()
         self.hardwareName = "motor"
         self.hardwareId = hardwareId
-        self.messageRouter = messageRouter
+
         self.isCommand = False
         self.command = []
         

@@ -1,5 +1,7 @@
-import smbus
+import fake_rpi.smbus
+#import smbus
 from time import sleep 
+
 
 
 AddressCOMPASS = 0x02

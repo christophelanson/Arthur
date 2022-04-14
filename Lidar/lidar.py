@@ -3,8 +3,8 @@ import math
 import csv
 import numpy as np
 import matplotlib.pyplot as plt
-
-ser = serial.Serial(port='/dev/ttyUSB0', baudrate='115200')
+                        #ttyUSB0
+ser = serial.Serial(port='/dev/tty', baudrate='115200')
 data_start = False
 data = []
 data_dec = []
