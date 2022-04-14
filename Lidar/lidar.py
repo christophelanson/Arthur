@@ -2,7 +2,7 @@ import serial
 import math
 import csv
 import numpy as np
-import matplotlib.pyplot as plt
+#import matplotlib.pyplot as plt
                         #ttyUSB0
 ser = serial.Serial(port='/dev/tty', baudrate='115200')
 data_start = False

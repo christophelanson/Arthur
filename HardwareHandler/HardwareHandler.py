@@ -15,6 +15,7 @@ class HardwareHandler(QObject):
         self.signalDict = {}
         self.hardwareDictId = {}
         self.dictThread = {}
+        self.countHardware = 0 
     
     # Créer un hardware à partir de du code de class associé
     # 1er paramètre : nom du hardware, 2 ème paramètre class du hardware, 3 ème paramètre paramètre d'init de la classe
@@ -29,7 +30,8 @@ class HardwareHandler(QObject):
                     self.hardwareDict[hardwareName] = hardware(param[0], param[1], param[2])
             else:
                 self.hardwareDict[hardwareName] = hardware()
-            self.hardwareDictId[param[-1]] = hardwareName
+            self.hardwareDictId[self.countHardware] = hardwareName
+            self.countHardware += 1 
 
             print(f"{Fore.GREEN}INFO (hardwareHandler) -> {hardwareName} launch")
         except Exception as e:

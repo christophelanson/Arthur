@@ -2,5 +2,5 @@
 "fullName": "Arthur",
 "name": "A",
 "node" : 1,
-"modules" : ["motor", "lidar", "radio", "camera", "gyro"]
+"modules" : ["main", "motor", "camera", "gyro"]
 }

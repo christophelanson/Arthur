@@ -7,14 +7,15 @@ from PyQt5.QtWidgets import *
 
 
 sys.path.append(".")
+from Mqtt import Mqtt
 from HardwareHandler import HardwareHandler #Permet de creer un hardware et d'executer son code en //, les hardwares fonctionnelles sont stockés dans un dictionnaire
 from UI import UI  #Interface graphique
 import Motor
-from Lidar import lidar
+#from Lidar import lidar
 from Camera import Camera
 from Gyro import Gyro
-from Communication import RadioRobot
-from Mqtt import Mqtt
+from Communication import Radio
+
 
 
 class Main(QMainWindow):
@@ -29,29 +30,38 @@ class Main(QMainWindow):
         # créer chaque hardware
         self.hardwareHandler = HardwareHandler.HardwareHandler()
         # 1er paramètre : nom du hardware, 2 ème paramètre class du hardware, 3 ème paramètre paramètre d'init de la classe
-        hardwareId = 0
-        self.hardwareHandler.addHardware("radio", RadioRobot.RadioRobot, hardwareId)
-        hardwareId += 1
-        self.hardwareHandler.addHardware("motor", Motor.Motor, hardwareId)
-        hardwareId += 1
-        self.hardwareHandler.addHardware("camera", Camera.Camera, self.hardwareHandler, hardwareId)
-        hardwareId += 1
-        self.hardwareHandler.addHardware("lidar", Lidar.Lidar, self.hardwareHandler, hardwareId)
-        hardwareId += 1
-        self.hardwareHandler.addHardware("gyro", Gyro.Compass, self.hardwareHandler, hardwareId)
-        hardwareId += 1
-        self.hardwareHandler.addHardware("ui", UI.UI, hardwareId)
+
+        #self.hardwareHandler.addHardware("radio", Radio.Radio, hardwareId)
+
+        self.hardwareHandler.addHardware("motor", Motor.Motor)
+
+        self.hardwareHandler.addHardware("camera", Camera.Camera)
+
+        #self.hardwareHandler.addHardware("lidar", Lidar.Lidar, self.hardwareHandler, hardwareId)
+
+        #self.hardwareHandler.addHardware("gyro", Gyro.Compass)
+
+        #self.hardwareHandler.addHardware("ui", UI.UI, hardwareId)
 
         self.hardwareHandler.runThreadHardware()
         
         layout = QVBoxLayout()
 
         self.l = QLabel("Start")
-        b = QPushButton("DANGER!")
-        b.pressed.connect(self.getState)
+        b1 = QPushButton("Get motor state")
+        b1.pressed.connect(self.getState)
+
+        b2 = QPushButton("Run")
+        b2.pressed.connect(self.runMotor)    
+
+        b3 = QPushButton("Stop")
+        b3.pressed.connect(self.stopMotor)    
+     
 
         layout.addWidget(self.l)
-        layout.addWidget(b)
+        layout.addWidget(b1)
+        layout.addWidget(b2)
+        layout.addWidget(b3)
 
         w = QWidget()
         w.setLayout(layout)
@@ -61,20 +71,35 @@ class Main(QMainWindow):
         self.show()
 
         self.listChannel = ["all"]
-        self.mqtt = Mqtt.Mqtt(hardwareName="UI", on_message=self.on_message, listChannel=self.listChannel)
+        self.mqtt = Mqtt.Mqtt(hardwareName="main", on_message=self.on_message, listChannel=self.listChannel)
+
+        self.gyroValue = 0
+
+    def on_message(self, client, data, message):
+        self.mqtt.decodeMessage(message=message)
+
+        if self.mqtt.lastCommand == "state":
+            print("State,", self.mqtt.lastSender, "is", self.mqtt.lastPayload)
+
 
 
     def on_message(self, client, data, message):
-        print("message topic:", message.topic)
-        print("client:", client.id)
-        print("message", str(message.payload.decode()))
+        self.mqtt.decodeMessage(message=message)
         
 
     def getState(self):
-        self.mqtt.client.publish("all","get state")
+        result = self.mqtt.sendMessage(message="getState/", receiver="motor", awnserNeeded=True)
+        print("state received", result) 
+    
+    def runMotor(self):
+        self.mqtt.sendMessage(message="command/run-1-1-0-30-0", receiver="motor")
+    
+    def stopMotor(self):
+        self.mqtt.sendMessage(message="command/stop", receiver="motor")
 
 
 if __name__ == "__main__":
+
     app = QApplication([])
     windows = Main()
     app.exec_()
