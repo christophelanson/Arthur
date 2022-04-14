@@ -24,12 +24,7 @@ class Camera(QRunnable):
 
         if self.mqtt.lastCommand == "capture":
             self.capture()
-        
-        if self.mqtt.lastCommand == "command":
-            self.executeCommand(self.mqtt.lastPayload)
-        
-        if self.mqtt.lastCommand == "gyroValue":
-            self.gyroValue = int(self.mqtt.lastPayload)
+    
 
     @pyqtSlot()
     def run(self):

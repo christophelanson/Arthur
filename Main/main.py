@@ -54,7 +54,10 @@ class Main(QMainWindow):
         b2.pressed.connect(self.runMotor)    
 
         b3 = QPushButton("Stop")
-        b3.pressed.connect(self.stopMotor)    
+        b3.pressed.connect(self.stopMotor) 
+
+        b4 = QPushButton("Camera")
+        b4.pressed.connect(self.photoCamera)    
      
 
         layout.addWidget(self.l)
@@ -92,6 +95,9 @@ class Main(QMainWindow):
     
     def stopMotor(self):
         self.mqtt.sendMessage(message="command/stop", receiver="motor")
+    
+    def photoCamera(self):
+        self.mqtt.sendMessage(message="capture/", receiver="camera")
 
 
 if __name__ == "__main__":

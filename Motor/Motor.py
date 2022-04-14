@@ -116,9 +116,9 @@ class Motor(QRunnable):
 
     def move(self, timeMove, direction, initSpeed, maxSpeed, finalSpeed):
         self.state = "running"
-        self.startDirection = self.gyro()
+        self.startDirection = self.gyroValue
         nominalTime = timeMove - (self.dT * 12)
-        nbDtNominalTime = int(nominalTime / self.dt)
+        nbDtNominalTime = int(nominalTime / self.dT)
         addzero = list(np.zeros((nbDtNominalTime)))
         self.listStep = self.listStepUp + addzero + self.listStepDown
         currentSpeed = initSpeed
@@ -171,6 +171,8 @@ class Motor(QRunnable):
         command = command.split("-")
         action = command[0]
         payload = command[1:]
+        payload = [float(i) for i in payload]
+
         print(action, payload)
         if action == "RUN":
             print("Motor start run")
