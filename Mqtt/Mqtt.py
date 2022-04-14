@@ -39,14 +39,14 @@ class Mqtt:
         self.lastPayload = self.lastMessage.split("/")[1]
         self.lastTopic = message.topic
         self.lastSender = self.lastTopic.split("/")[0]
-        print(self.hardwareName, "recevied message from:", self.lastSender, ":")
-        print("\r message: ", self.lastMessage)
+        #print(self.hardwareName, "recevied message from:", self.lastSender, ":")
+        #print("\r message: ", self.lastMessage)
         self.waitingAwnser = False
     
     def sendMessage(self, message, receiver, awnserNeeded = False):
         topic = self.hardwareName + "/" + receiver
         self.client.publish(topic, message)
-        print(self.hardwareName, "send", message,"to", receiver)
+        #print(self.hardwareName, "send", message,"to", receiver)
         if awnserNeeded:
             self.waitingAwnser = True
             while self.waitingAwnser:

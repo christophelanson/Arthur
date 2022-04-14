@@ -17,7 +17,6 @@ from Gyro import Gyro
 from Communication import Radio
 
 
-
 class Main(QMainWindow):
 
     def __init__(self):
@@ -39,7 +38,7 @@ class Main(QMainWindow):
 
         #self.hardwareHandler.addHardware("lidar", Lidar.Lidar, self.hardwareHandler, hardwareId)
 
-        #self.hardwareHandler.addHardware("gyro", Gyro.Compass)
+        self.hardwareHandler.addHardware("gyro", Gyro.Compass)
 
         #self.hardwareHandler.addHardware("ui", UI.UI, hardwareId)
 
@@ -81,12 +80,9 @@ class Main(QMainWindow):
         if self.mqtt.lastCommand == "state":
             print("State,", self.mqtt.lastSender, "is", self.mqtt.lastPayload)
 
-
-
     def on_message(self, client, data, message):
         self.mqtt.decodeMessage(message=message)
         
-
     def getState(self):
         result = self.mqtt.sendMessage(message="getState/", receiver="motor", awnserNeeded=True)
         print("state received", result) 

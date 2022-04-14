@@ -13,18 +13,18 @@ AddressROLL = 0x05
 class Compass(QRunnable):
 
     def __init__(self):
+        super(Compass, self).__init__()
         self.hardwareName = "gyro"
         self.state = "ready"
-        self.bus = smbus.SMBus(1) 
+        #self.bus = smbus.SMBus(1) 
         self.Device_Address = 0x60  
-        self.bus.write_byte_data(self.Device_Address, 0, 1)
+        #self.bus.write_byte_data(self.Device_Address, 0, 1)
         self.state = "init"
 
         self.listChannel = ["all"]
         self.mqtt = Mqtt.Mqtt(hardwareName=self.hardwareName, on_message=self.on_message, listChannel=self.listChannel)
-        self.speedData = 1000
-        self.timer = QTimer()
-        self.timer.timeout.connect(self.sendValue)
+        self.speedData = 1
+ 
 
     def on_message(self, client, data, message):
         self.mqtt.decodeMessage(message=message)
@@ -39,7 +39,17 @@ class Compass(QRunnable):
     @pyqtSlot()
     def run(self):
         print("Thread", self.hardwareName, "is running")
+        while True:
+            sleep(0.1)
+            self.sendValue()
+        self.timer = QTimer()
+        self.timer.timeout.connect(self.sendValue)
+        print("Thread", self.hardwareName, "is running")
         self.timer.start(self.speedData)
+
+    def sendValue(self):
+        message = "gyroValue/100-1-5" # + self.getSensorValue
+        self.mqtt.sendMessage(message=message, receiver="motor")
 
     def setSpeedData(self):
         self.speedData = self.mqtt.lastPayload

@@ -35,7 +35,7 @@ class Motor(QRunnable):
         GPIO.setup(self.INA, GPIO.OUT, initial=GPIO.LOW)
         GPIO.setup(self.ENB, GPIO.OUT, initial=GPIO.LOW)
         GPIO.setup(self.INB, GPIO.OUT, initial=GPIO.LOW)
-        # Set the PWM pin and frequency is 2000hz
+        # Set the PWM pin and frequency     [Errno 121] Remote I/O erroris 2000hz
         self.pwm_ENA = GPIO.PWM(self.ENA, 2000)
         self.pwm_ENB = GPIO.PWM(self.ENB, 2000)
         self.startDirection = 0
@@ -57,7 +57,7 @@ class Motor(QRunnable):
             self.executeCommand(self.mqtt.lastPayload)
         
         if self.mqtt.lastCommand == "gyroValue":
-            self.gyroValue = int(self.mqtt.lastPayload)
+            self.gyroValue = int(self.mqtt.lastPayload.split("-")[0])
 
     @pyqtSlot()
     def run(self):
