@@ -16,9 +16,9 @@ class Compass(QRunnable):
         super(Compass, self).__init__()
         self.hardwareName = "gyro"
         self.state = "ready"
-        #self.bus = smbus.SMBus(1) 
+        self.bus = smbus.SMBus(1) 
         self.Device_Address = 0x60  
-        #self.bus.write_byte_data(self.Device_Address, 0, 1)
+        self.bus.write_byte_data(self.Device_Address, 0, 1)
         self.state = "init"
 
         self.listChannel = ["all"]
@@ -48,7 +48,7 @@ class Compass(QRunnable):
         self.timer.start(self.speedData)
 
     def sendValue(self):
-        message = "gyroValue/100-1-5" # + self.getSensorValue
+        message = "gyroValue/" + self.getSensorValue()
         self.mqtt.sendMessage(message=message, receiver="motor")
 
     def setSpeedData(self):
