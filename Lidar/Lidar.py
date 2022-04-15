@@ -5,13 +5,13 @@ import numpy as np
 #import matplotlib.pyplot as plt
 import time
 #import ydlidar
-import PyLidar3
+#import PyLidar3
 
 
 class Lidar:
     
-    def __init__(self, messageRouter):
-        self.messageRouter = messageRouter
+    def __init__(self): #, messageRouter):
+        #self.messageRouter = messageRouter
         self.ser = serial.Serial(port='/dev/ttyUSB0', baudrate='115200')
         self.ser.close()
         self.dict_angle_distance = {} # dictionnaire angles et distances classés par paquets angulaire d'amplitude 0,5° : dimension 720 lignes
@@ -183,11 +183,11 @@ class Lidar:
         #numeroDeFichier = input()
 
         # crée le fichier lidar2.csv des données brutes (taille 7.200 x 2)
-        nomDuFichier = "../Log/outputLidarFile" + str(self.numeroDeFichier) + ".csv"
+        nomDuFichier = "Log/outputLidarFile" + str(self.numeroDeFichier) + ".csv"
         np.savetxt(nomDuFichier, self.outputDataList, fmt= '%.2f', delimiter=",")
 
         # crée le fichier des objets LidarObjects.csv
-        nomDuFichier = "../Log/outputObjectsFile" + str(self.numeroDeFichier) + ".csv"
+        nomDuFichier = "Log/outputObjectsFile" + str(self.numeroDeFichier) + ".csv"
         self.listObjets = np.asarray(self.listObjets) # convertit la liste en numpy
         np.savetxt(nomDuFichier, self.listObjets, fmt= '%.2f', delimiter=",")
 
@@ -201,3 +201,9 @@ class Lidar:
                 self.createOutputDataList()
                 self.isScan = False
             time.sleep(0.1)
+
+
+if __name__ == "__main__":
+    lidar = Lidar()
+    lidar.getData()
+    lidar.createOutputDataList()

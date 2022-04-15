@@ -14,10 +14,11 @@ AddressROLL = 0x05
 
 class Compass(QRunnable):
 
-    def __init__(self, database:DataBase):
+    def __init__(self):
         super(Compass, self).__init__()
-        self.dataBase = database
         self.hardwareName = "gyro"
+        self.dataBase = DataBase.DataBase(id=self.hardwareName)
+        
         self.state = "ready"
         self.bus = smbus.SMBus(1) 
         self.Device_Address = 0x60  

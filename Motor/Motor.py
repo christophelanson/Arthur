@@ -11,11 +11,12 @@ from DataBase import DataBase
   
 class Motor(QRunnable):
 
-    def __init__(self, dataBase:DataBase):
+    def __init__(self):
         
         super(Motor, self).__init__()
-        self.dataBase = dataBase
         self.hardwareName = "motor"
+        self.dataBase = DataBase.DataBase(id=self.hardwareName)
+        
         
         self.isStop = False
         self.INA = 20
@@ -77,8 +78,9 @@ class Motor(QRunnable):
         self.state = "stop"
     
     def getGyroValue(self):
-        print(self.dataBase.getSensorValue("gyro"))
+        #print(self.dataBase.getSensorValue("gyro"))
         return float(self.dataBase.getSensorValue("gyro").split("-")[0])
+        return 180
         
         #return self.messageRouter.route(senderName=self.node, receiverName=self.node, hardware="gyro", command=command, isReturn=False, channel="own")
         

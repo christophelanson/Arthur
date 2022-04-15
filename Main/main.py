@@ -27,20 +27,21 @@ class Main(QMainWindow):
             idRobot = json.load(f)
         print(f"{Fore.GREEN}INFO (main) -> Initialising {idRobot}")
         listSensor = ["gyro", "miniLidar"] 
-        self.dataBase = DataBase.DataBase(listSensor=listSensor)
+        self.dataBase = DataBase.DataBase("main")
+        self.dataBase.initSensorTable(listSensor)
         # créer chaque hardware
         self.hardwareHandler = HardwareHandler.HardwareHandler()
         # 1er paramètre : nom du hardware, 2 ème paramètre class du hardware, 3 ème paramètre paramètre d'init de la classe
 
         #self.hardwareHandler.addHardware("radio", Radio.Radio, hardwareId)
 
-        self.hardwareHandler.addHardware("motor", Motor.Motor, self.dataBase)
+        self.hardwareHandler.addHardware("motor", Motor.Motor)
 
-        self.hardwareHandler.addHardware("camera", Camera.Camera, self.dataBase)
+        self.hardwareHandler.addHardware("camera", Camera.Camera)
 
         #self.hardwareHandler.addHardware("lidar", Lidar.Lidar, self.hardwareHandler, hardwareId)
 
-        self.hardwareHandler.addHardware("gyro", Gyro.Compass, self.dataBase)
+        self.hardwareHandler.addHardware("gyro", Gyro.Compass)
 
         #self.hardwareHandler.addHardware("ui", UI.UI, hardwareId)
 
