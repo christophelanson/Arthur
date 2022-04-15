@@ -7,8 +7,9 @@ from Mqtt import Mqtt
 
 class Camera(QRunnable):
     
-    def __init__(self):
+    def __init__(self, database):
         super(Camera, self).__init__()
+        self.dataBase = database
         self.hardwareName = "camera"
         self.photoPath = "../Log/Images/"
         self.isCapture = False

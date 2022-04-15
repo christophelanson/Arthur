@@ -6,12 +6,15 @@ from PyQt5.QtCore import *
 from PyQt5.QtGui import *
 from PyQt5.QtWidgets import *
 from Mqtt import Mqtt
+from DataBase import DataBase
 
   
 class Motor(QRunnable):
 
-    def __init__(self):
+    def __init__(self, dataBase:DataBase):
+        
         super(Motor, self).__init__()
+        self.dataBase = database
         self.hardwareName = "motor"
         
         self.isStop = False
@@ -45,24 +48,25 @@ class Motor(QRunnable):
         self.mqtt = Mqtt.Mqtt(hardwareName=self.hardwareName, on_message=self.on_message, listChannel=self.listChannel)
 
         self.gyroValue = 0
+        self.messageReceived = False
 
     def on_message(self, client, data, message):
         self.mqtt.decodeMessage(message=message)
-
         if self.mqtt.lastCommand == "getState":
             message = "state/" + self.state
             self.mqtt.sendMessage(message=message, receiver=self.mqtt.lastSender)
-        
+    
         if self.mqtt.lastCommand == "command":
             self.executeCommand(self.mqtt.lastPayload)
         
         if self.mqtt.lastCommand == "gyroValue":
             self.gyroValue = int(self.mqtt.lastPayload.split("-")[0])
-
+        self.messageReceived = False
+        
     @pyqtSlot()
     def run(self):
             print("Thread", self.hardwareName, "is running")
-    
+  
     def stop(self):
         self.pwm_ENA.stop()
         self.pwm_ENB.stop()
@@ -72,12 +76,13 @@ class Motor(QRunnable):
         self.isStop = False
         self.state = "stop"
     
-    def getGyroValue(self,command):
-        self.mqtt.sendMessage(message="getSensorValue", receiver="gyro") 
+    def getGyroValue(self):
+        return self.dataBase.getSensorValue("gyro").split("-")[0]
+        
         #return self.messageRouter.route(senderName=self.node, receiverName=self.node, hardware="gyro", command=command, isReturn=False, channel="own")
         
     def calculateCorrectionRun(self, currentSpeed):
-        currentDirection = self.gyroValue
+        currentDirection = self.getGyroValue()
         correctionRun = self.startDirection - currentDirection # fonction à vérifier
         currentSpeedRight = currentSpeed * (1 - correctionRun)
         currentSpeedLeft = currentSpeed * (1 + correctionRun)
@@ -174,7 +179,7 @@ class Motor(QRunnable):
         payload = [float(i) for i in payload]
 
         print(action, payload)
-        if action == "RUN":
+        if action == "run":
             print("Motor start run")
             self.move(payload[0], payload[1], payload[2], payload[3], payload[4])
         if action == "TURN":

@@ -15,6 +15,7 @@ import Motor
 from Camera import Camera
 from Gyro import Gyro
 from Communication import Radio
+from DataBase import DataBase
 
 
 class Main(QMainWindow):
@@ -25,20 +26,21 @@ class Main(QMainWindow):
         with open('Main/idRobot.json') as f: #Permet de recuperer l'uinque ID associé a la carte
             idRobot = json.load(f)
         print(f"{Fore.GREEN}INFO (main) -> Initialising {idRobot}")
-
+        listSensor = ["gyro", "miniLidar"] 
+        self.dataBase = DataBase.DataBase(listSensor=listSensor)
         # créer chaque hardware
         self.hardwareHandler = HardwareHandler.HardwareHandler()
         # 1er paramètre : nom du hardware, 2 ème paramètre class du hardware, 3 ème paramètre paramètre d'init de la classe
 
         #self.hardwareHandler.addHardware("radio", Radio.Radio, hardwareId)
 
-        self.hardwareHandler.addHardware("motor", Motor.Motor)
+        self.hardwareHandler.addHardware("motor", Motor.Motor, self.dataBase)
 
-        self.hardwareHandler.addHardware("camera", Camera.Camera)
+        self.hardwareHandler.addHardware("camera", Camera.Camera, self.dataBase)
 
         #self.hardwareHandler.addHardware("lidar", Lidar.Lidar, self.hardwareHandler, hardwareId)
 
-        self.hardwareHandler.addHardware("gyro", Gyro.Compass)
+        self.hardwareHandler.addHardware("gyro", Gyro.Compass, self.dataBase)
 
         #self.hardwareHandler.addHardware("ui", UI.UI, hardwareId)
 
@@ -58,12 +60,20 @@ class Main(QMainWindow):
 
         b4 = QPushButton("Camera")
         b4.pressed.connect(self.photoCamera)    
+
+        b5 = QPushButton("Test database")
+        b5.pressed.connect(self.testDataBase) 
+
+        b6 = QPushButton("update database")
+        b6.pressed.connect(self.updateDataBase) 
      
 
         layout.addWidget(self.l)
         layout.addWidget(b1)
         layout.addWidget(b2)
         layout.addWidget(b3)
+        layout.addWidget(b5)
+        layout.addWidget(b6)
 
         w = QWidget()
         w.setLayout(layout)
@@ -76,6 +86,15 @@ class Main(QMainWindow):
         self.mqtt = Mqtt.Mqtt(hardwareName="main", on_message=self.on_message, listChannel=self.listChannel)
 
         self.gyroValue = 0
+
+    def testDataBase(self):
+        listSensor = ["gyro","miniLidar"]
+        self.dataBase.insertSensorValue(listSensor)
+        self.dataBase.getSensorValue("gyro")
+
+    def updateDataBase(self):
+        self.dataBase.updateSensorValue("gyro",100)
+        self.dataBase.getSensorValue("gyro")
 
     def on_message(self, client, data, message):
         self.mqtt.decodeMessage(message=message)

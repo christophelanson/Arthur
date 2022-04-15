@@ -5,6 +5,8 @@ from PyQt5.QtCore import QTimer
 from PyQt5.QtCore import *
 from PyQt5.QtGui import *
 from PyQt5.QtWidgets import *
+from DataBase import DataBase
+
 
 AddressCOMPASS = 0x02
 AddressPITCH = 0x04
@@ -12,8 +14,9 @@ AddressROLL = 0x05
 
 class Compass(QRunnable):
 
-    def __init__(self):
+    def __init__(self, database:DataBase):
         super(Compass, self).__init__()
+        self.dataBase = database
         self.hardwareName = "gyro"
         self.state = "ready"
         self.bus = smbus.SMBus(1) 
@@ -48,8 +51,10 @@ class Compass(QRunnable):
         self.timer.start(self.speedData)
 
     def sendValue(self):
-        message = "gyroValue/" + self.getSensorValue()
-        self.mqtt.sendMessage(message=message, receiver="motor")
+        value = self.getSensorValue()
+        self.dataBase.updateSensorValue("gyro", value)
+        #message = "gyroValue/" + self.getSensorValue()
+        #self.mqtt.sendMessage(message=message, receiver="motor")
 
     def setSpeedData(self):
         self.speedData = self.mqtt.lastPayload
