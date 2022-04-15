@@ -14,7 +14,7 @@ class Motor(QRunnable):
     def __init__(self, dataBase:DataBase):
         
         super(Motor, self).__init__()
-        self.dataBase = database
+        self.dataBase = dataBase
         self.hardwareName = "motor"
         
         self.isStop = False
@@ -77,15 +77,17 @@ class Motor(QRunnable):
         self.state = "stop"
     
     def getGyroValue(self):
-        return self.dataBase.getSensorValue("gyro").split("-")[0]
+        print(self.dataBase.getSensorValue("gyro"))
+        return float(self.dataBase.getSensorValue("gyro").split("-")[0])
         
         #return self.messageRouter.route(senderName=self.node, receiverName=self.node, hardware="gyro", command=command, isReturn=False, channel="own")
         
     def calculateCorrectionRun(self, currentSpeed):
         currentDirection = self.getGyroValue()
-        correctionRun = self.startDirection - currentDirection # fonction à vérifier
+        correctionRun = (self.startDirection - currentDirection) / 180 # fonction à vérifier
         currentSpeedRight = currentSpeed * (1 - correctionRun)
         currentSpeedLeft = currentSpeed * (1 + correctionRun)
+        print(self.startDirection, currentDirection, currentSpeedLeft, currentSpeedRight)
         return currentSpeedLeft, currentSpeedRight
 
     def calculateCorrectionTurn(self, currentSpeedLeft, currentSpeedRight):
@@ -121,7 +123,7 @@ class Motor(QRunnable):
 
     def move(self, timeMove, direction, initSpeed, maxSpeed, finalSpeed):
         self.state = "running"
-        self.startDirection = self.gyroValue
+        self.startDirection = self.getGyroValue()
         nominalTime = timeMove - (self.dT * 12)
         nbDtNominalTime = int(nominalTime / self.dT)
         addzero = list(np.zeros((nbDtNominalTime)))

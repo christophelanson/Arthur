@@ -110,7 +110,7 @@ class Main(QMainWindow):
         print("state received", result) 
     
     def runMotor(self):
-        self.mqtt.sendMessage(message="command/run-1-1-0-30-0", receiver="motor")
+        self.mqtt.sendMessage(message="command/run-7-1-0-30-0", receiver="motor")
     
     def stopMotor(self):
         self.mqtt.sendMessage(message="command/stop", receiver="motor")
