@@ -60,9 +60,9 @@ class Radio(QRunnable):
         return dictAddressTx
     
     def initRadio(self):
-        #self.nrf.open_tx_pipe(b"PIPE1")
+        self.nrf.open_tx_pipe(b"1Node")
         #for node in self.dictAddress.keys():
-        self.nrf.open_rx_pipe(0, b"PIPE1") # comprendre pipe / adresse
+        self.nrf.open_rx_pipe(1, b"2Node") # comprendre pipe / adresse
         self.nrf.listen = True
         print(f"{Fore.GREEN}INFO (radio) -> Radio ready for receiving...")
         
@@ -71,7 +71,7 @@ class Radio(QRunnable):
         csn = digitalio.DigitalInOut(board.D5)
         spi = board.SPI()  # init spi bus object
         self.nrf = RF24(spi, csn, ce)
-        self.nrf.pa_level = -12
+        self.nrf.pa_level = -18
         self.radioIrqPin = 12
         self.nrf.channel = 100
 
@@ -79,8 +79,10 @@ class Radio(QRunnable):
         GPIO.add_event_detect(self.radioIrqPin, GPIO.FALLING, callback=self.read)
         
     def read(self, event):
-        if not self.isWriting:
-            print("Received", self.nrf.any(), "on pipe", self.nrf.pipe, ":")
+        #self.nrf.listen = True
+        print("Received", self.nrf.any(), "on pipe", self.nrf.pipe, ":")
+        print(self.nrf.read())
+            
             #messageReceived = self.nrf.read().split("/")
             #receiverId = messageReceived[0]
             #receiver = self.hardwareHandler.hardwareDictId[receiverId]
@@ -89,22 +91,20 @@ class Radio(QRunnable):
     def write(self, data):
         print(f"{Fore.GREEN}INFO (radio) -> Start sending the payload {data} to {list(self.dictAddress.keys())}")
         self.nrf.listen = False
-        self.isWriting = True
         payload = data.encode("ascii")
-        report = self.nrf.send(buf=payload, ask_no_ack=False, force_retry=100, send_only=False)
+        report = self.nrf.send(buf=payload, ask_no_ack=False, force_retry=10, send_only=False)
         if report:
             print(f"{Fore.GREEN}INFO -> Transmission  successfull! ")
         else:
             print(f"{Fore.GREEN}INFO -> Transmission failed or timed out")
         self.nrf.listen = True
         self.state = "listening"
-        self.isWriting = False
         return
 
 if __name__ == "__main__":
     
-    RadioRobot1 = Radio(1)
-    RadioRobot1.runPara()
+    RadioRobot1 = Radio()
+    RadioRobot1.write("bonjour")
     #RadioRobot1.write("ABCDEFGHIJKLMNOPQRSTUVWXYZ")
     #while True:
      #   RadioRobot1.read()
