@@ -1,4 +1,3 @@
-from HardwareHandler.HardwareHandler import HardwareHandler
 from circuitpython_nrf24l01.rf24 import RF24
 import board
 import digitalio
@@ -13,13 +12,14 @@ from Mqtt import Mqtt
 
 GPIO.setmode(GPIO.BCM)
 
-class Radio:
+class Radio(QRunnable):
 
-    def __init__(self, node, hardwareHandler:HardwareHandler, hardwareId):
-        
+    def __init__(self):
+        super(Radio, self).__init__()
+
+        node = 2
+
         self.hardwareName = "radio"
-        self.hardwareId = hardwareId
-        self.hardwareHandler = hardwareHandler
         self.dictAddress = self.setIdentity(node)
 
         self.initSpi()

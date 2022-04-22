@@ -15,7 +15,7 @@ import Motor
 #from Lidar import lidar
 from Camera import Camera
 from Gyro import Gyro
-from Communication import Radio
+from Radio import Radio
 from DataBase import DataBase
 
 
@@ -34,15 +34,15 @@ class Main(QMainWindow):
         self.hardwareHandler = HardwareHandler.HardwareHandler()
         # 1er paramètre : nom du hardware, 2 ème paramètre class du hardware, 3 ème paramètre paramètre d'init de la classe
 
-        #self.hardwareHandler.addHardware("radio", Radio.Radio, hardwareId)
+        self.hardwareHandler.addHardware("radio", Radio.Radio)
 
-        self.hardwareHandler.addHardware("motor", Motor.Motor)
+        #self.hardwareHandler.addHardware("motor", Motor.Motor)
 
-        self.hardwareHandler.addHardware("camera", Camera.Camera)
+        #self.hardwareHandler.addHardware("camera", Camera.Camera)
 
         #self.hardwareHandler.addHardware("lidar", Lidar.Lidar, self.hardwareHandler, hardwareId)
 
-        self.hardwareHandler.addHardware("gyro", Gyro.Compass)
+        #self.hardwareHandler.addHardware("gyro", Gyro.Compass)
 
         #self.hardwareHandler.addHardware("ui", UI.UI, hardwareId)
 
@@ -69,6 +69,9 @@ class Main(QMainWindow):
         b6 = QPushButton("update database")
         b6.pressed.connect(self.updateDataBase) 
 
+        b8 = QPushButton("Radio send")
+        b8.pressed.connect(self.sendRadio) 
+
         b7 = QPushButton("Close Code")
         b7.pressed.connect(self.closeEvent) 
      
@@ -80,6 +83,7 @@ class Main(QMainWindow):
         layout.addWidget(b5)
         layout.addWidget(b6)
         layout.addWidget(b7)
+        layout.addWidget(b8)
 
         w = QWidget()
         w.setLayout(layout)
@@ -97,6 +101,8 @@ class Main(QMainWindow):
         app.quit()
         100/0
 
+    def sendRadio(self):
+        self.mqtt.sendMessage(message="send/bonjour", receiver="radio", awnserNeeded=True)
 
     def testDataBase(self):
         listSensor = ["gyro","miniLidar"]
