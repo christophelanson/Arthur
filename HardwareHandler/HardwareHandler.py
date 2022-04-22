@@ -43,6 +43,9 @@ class HardwareHandler(QObject):
         print(f"{Fore.GREEN}INFO (hardwareHandler) -> Opening threads for {self.hardwareDict.keys()}")
         for hardware in self.hardwareDict.keys():
             self.threadPool.start(self.hardwareDict[hardware])
+    
+    def stopThreadHardware(self):
+        pass
 
   
         

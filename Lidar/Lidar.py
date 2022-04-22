@@ -105,7 +105,11 @@ class Lidar:
                         data = []
                         data_start = False
         print (dataCount, " raw data collected")
+        self.stopLidar()
         self.ser.close()
+
+    def stopLidar(self):
+        self.ser.write(b'\0xA5\0x65')
 
     def createOutputDataList(self):
 
@@ -207,3 +211,4 @@ if __name__ == "__main__":
     lidar = Lidar()
     lidar.getData()
     lidar.createOutputDataList()
+    #lidar.stopLidar()

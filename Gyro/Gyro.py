@@ -51,6 +51,11 @@ class Compass(QRunnable):
         print("Thread", self.hardwareName, "is running")
         self.timer.start(self.speedData)
 
+    @pyqtSlot()
+    def stop(self):
+        print(self.hardwareName, "closed")
+        exit(0)
+        
     def sendValue(self):
         value = self.getSensorValue()
         self.dataBase.updateSensorValue("gyro", value)

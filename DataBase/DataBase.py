@@ -5,9 +5,10 @@ class DataBase:
 
     def __init__(self, id):
 
-        
+
         self.db = QtSql.QSqlDatabase.addDatabase('QSQLITE',id)
         self.db.setDatabaseName('robotDb.sqlite')
+
         if not self.db.open():
             print(f"{Fore.RED}ERROR (hardwareHandler) -> Error while lauching database")
             exit(0)

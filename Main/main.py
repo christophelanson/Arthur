@@ -1,4 +1,5 @@
 import sys
+from sys import *
 import json
 from colorama import Fore  #Permet de print en couleur
 from PyQt5.QtCore import *
@@ -67,6 +68,9 @@ class Main(QMainWindow):
 
         b6 = QPushButton("update database")
         b6.pressed.connect(self.updateDataBase) 
+
+        b7 = QPushButton("Close Code")
+        b7.pressed.connect(self.closeEvent) 
      
 
         layout.addWidget(self.l)
@@ -75,6 +79,7 @@ class Main(QMainWindow):
         layout.addWidget(b3)
         layout.addWidget(b5)
         layout.addWidget(b6)
+        layout.addWidget(b7)
 
         w = QWidget()
         w.setLayout(layout)
@@ -87,6 +92,11 @@ class Main(QMainWindow):
         self.mqtt = Mqtt.Mqtt(hardwareName="main", on_message=self.on_message, listChannel=self.listChannel)
 
         self.gyroValue = 0
+
+    def closeEvent(self):
+        app.quit()
+        100/0
+
 
     def testDataBase(self):
         listSensor = ["gyro","miniLidar"]
@@ -111,7 +121,7 @@ class Main(QMainWindow):
         print("state received", result) 
     
     def runMotor(self):
-        self.mqtt.sendMessage(message="command/run-7-1-0-30-0", receiver="motor")
+        self.mqtt.sendMessage(message="command/run-10-1-0-30-0", receiver="motor")
     
     def stopMotor(self):
         self.mqtt.sendMessage(message="command/stop", receiver="motor")
@@ -124,4 +134,4 @@ if __name__ == "__main__":
 
     app = QApplication([])
     windows = Main()
-    app.exec_()
+    sys.exit(app.exec_())

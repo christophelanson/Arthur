@@ -67,7 +67,13 @@ class Motor(QRunnable):
     @pyqtSlot()
     def run(self):
             print("Thread", self.hardwareName, "is running")
-  
+    
+
+    @pyqtSlot()
+    def stop(self):
+        print(self.hardwareName, "closed")
+        exit(0)
+
     def stop(self):
         self.pwm_ENA.stop()
         self.pwm_ENB.stop()
@@ -80,13 +86,20 @@ class Motor(QRunnable):
     def getGyroValue(self):
         #print(self.dataBase.getSensorValue("gyro"))
         return float(self.dataBase.getSensorValue("gyro").split("-")[0])
-        return 180
         
         #return self.messageRouter.route(senderName=self.node, receiverName=self.node, hardware="gyro", command=command, isReturn=False, channel="own")
         
     def calculateCorrectionRun(self, currentSpeed):
         currentDirection = self.getGyroValue()
-        correctionRun = (self.startDirection - currentDirection) / 180 # fonction à vérifier
+
+        deltaCompass = self.startDirection - currentDirection
+
+        if deltaCompass < -180:
+            deltaCompass += 360
+        elif deltaCompass > 180:
+            deltaCompass -= 360
+
+        correctionRun = deltaCompass / 180 # fonction à vérifier
         currentSpeedRight = currentSpeed * (1 - correctionRun)
         currentSpeedLeft = currentSpeed * (1 + correctionRun)
         print(self.startDirection, currentDirection, currentSpeedLeft, currentSpeedRight)
