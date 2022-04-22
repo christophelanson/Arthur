@@ -60,11 +60,14 @@ class Radio(QRunnable):
         return dictAddressTx
     
     def initRadio(self):
-        self.nrf.open_tx_pipe(b"TEST4")
-        self.nrf.open_rx_pipe(1, b"TEST5") # comprendre pipe / adresse
+        self.nrf.open_tx_pipe(b"NODE1")
+
+        self.nrf.open_rx_pipe(1, b"NODE2") # comprendre pipe / adresse
         #for node in self.dictAddress.keys():
         #self.nrf.open_rx_pipe(1, b"TEST2") # comprendre pipe / adresse
+        self.nrf.interrupt_config(data_sent=False, data_fail=False)
         self.nrf.listen = True
+        self.nrf.update()
         print(f"{Fore.GREEN}INFO (radio) -> Radio ready for receiving...")
         
     def initSpi(self):
@@ -76,14 +79,15 @@ class Radio(QRunnable):
         self.radioIrqPin = 12
         self.nrf.channel = 100
 
-        #GPIO.setup(self.radioIrqPin, GPIO.IN, pull_up_down=GPIO.PUD_UP)
-        #GPIO.add_event_detect(self.radioIrqPin, GPIO.FALLING, callback=self.read)
+        GPIO.setup(self.radioIrqPin, GPIO.IN, pull_up_down=GPIO.PUD_UP)
+        GPIO.add_event_detect(self.radioIrqPin, GPIO.FALLING, callback=self.read)
         
     def read(self, event):
-        #self.nrf.listen = True
         print("Received", self.nrf.any(), "on pipe", self.nrf.pipe, ":")
         print(self.nrf.read())
-            
+        self.nrf.update()
+        #self.initSpi()
+        #self.initRadio()
             #messageReceived = self.nrf.read().split("/")
             #receiverId = messageReceived[0]
             #receiver = self.hardwareHandler.hardwareDictId[receiverId]
@@ -92,13 +96,20 @@ class Radio(QRunnable):
     def write(self, data):
         print(f"{Fore.GREEN}INFO (radio) -> Start sending the payload {data} to {list(self.dictAddress.keys())}")
         self.nrf.listen = False
+        #self.nrf.open_tx_pipe(b"NODE1")
         payload = data.encode("ascii")
         report = self.nrf.send(buf=payload, ask_no_ack=False, force_retry=10, send_only=False)
         if report:
             print(f"{Fore.GREEN}INFO -> Transmission  successfull! ")
         else:
             print(f"{Fore.GREEN}INFO -> Transmission failed or timed out")
+        
+        #
+        # self.nrf.open_rx_pipe(1, b"NODE2") 
+        #self.initSpi()
+        #self.initRadio()
         self.nrf.listen = True
+        self.nrf.update()
         self.state = "listening"
         return
 

@@ -13,21 +13,15 @@ from circuitpython_nrf24l01.rf24 import RF24
 # invalid default values for scoping
 SPI_BUS, CSN_PIN, CE_PIN = (None, None, None)
 
-try:  # on Linux
-    import spidev
 
-    SPI_BUS = spidev.SpiDev()  # for a faster interface on linux
-    CSN_PIN = 0  # use CE0 on default bus (even faster than using any pin)
-    CE_PIN = DigitalInOut(board.D22)  # using pin gpio22 (BCM numbering)
 
-except ImportError:  # on CircuitPython only
     # using board.SPI() automatically selects the MCU's
     # available SPI pins, board.SCK, board.MOSI, board.MISO
-    SPI_BUS = board.SPI()  # init spi bus object
+SPI_BUS = board.SPI()  # init spi bus object
 
-    # change these (digital output) pins accordingly
-    CE_PIN = DigitalInOut(board.D4)
-    CSN_PIN = DigitalInOut(board.D5)
+# change these (digital output) pins accordingly
+CE_PIN = DigitalInOut(board.D4)
+CSN_PIN = DigitalInOut(board.D5)
 
 
 # initialize the nRF24L01 on the spi bus object
