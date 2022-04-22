@@ -102,7 +102,7 @@ class Main(QMainWindow):
         100/0
 
     def sendRadio(self):
-        self.mqtt.sendMessage(message="send/bonjour", receiver="radio", awnserNeeded=True)
+        self.mqtt.sendMessage(message="send/bonjour", receiver="radio", awnserNeeded=False)
 
     def testDataBase(self):
         listSensor = ["gyro","miniLidar"]

@@ -17,13 +17,15 @@ class Radio(QRunnable):
     def __init__(self):
         super(Radio, self).__init__()
 
-        node = 2
+        node = 1
 
         self.hardwareName = "radio"
         self.dictAddress = self.setIdentity(node)
 
         self.initSpi()
         self.initRadio()
+        self.nrf.print_details()
+        self.nrf.print_pipes()
         self.isCommand = False
         self.isWaiting = False
         self.command = []
@@ -58,9 +60,9 @@ class Radio(QRunnable):
         return dictAddressTx
     
     def initRadio(self):
-        for node in self.dictAddress.keys():
-            self.nrf.open_rx_pipe(1, self.dictAddress[node]) # comprendre pipe / adresse
-        self.nrf.open_tx_pipe(self.ownAddress)
+        #self.nrf.open_tx_pipe(b"PIPE1")
+        #for node in self.dictAddress.keys():
+        self.nrf.open_rx_pipe(0, b"PIPE1") # comprendre pipe / adresse
         self.nrf.listen = True
         print(f"{Fore.GREEN}INFO (radio) -> Radio ready for receiving...")
         
@@ -71,20 +73,23 @@ class Radio(QRunnable):
         self.nrf = RF24(spi, csn, ce)
         self.nrf.pa_level = -12
         self.radioIrqPin = 12
+        self.nrf.channel = 100
+
         GPIO.setup(self.radioIrqPin, GPIO.IN, pull_up_down=GPIO.PUD_UP)
         GPIO.add_event_detect(self.radioIrqPin, GPIO.FALLING, callback=self.read)
         
     def read(self, event):
         if not self.isWriting:
             print("Received", self.nrf.any(), "on pipe", self.nrf.pipe, ":")
-            messageReceived = self.nrf.read().split("/")
-            receiverId = messageReceived[0]
-            receiver = self.hardwareHandler.hardwareDictId[receiverId]
-            self.mqtt.sendMessage(message="/".join(messageReceived[1:]), receiver=receiver)
+            #messageReceived = self.nrf.read().split("/")
+            #receiverId = messageReceived[0]
+            #receiver = self.hardwareHandler.hardwareDictId[receiverId]
+            #self.mqtt.sendMessage(message="/".join(messageReceived[1:]), receiver=receiver)
 
     def write(self, data):
         print(f"{Fore.GREEN}INFO (radio) -> Start sending the payload {data} to {list(self.dictAddress.keys())}")
         self.nrf.listen = False
+        self.isWriting = True
         payload = data.encode("ascii")
         report = self.nrf.send(buf=payload, ask_no_ack=False, force_retry=100, send_only=False)
         if report:
