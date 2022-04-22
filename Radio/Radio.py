@@ -60,9 +60,10 @@ class Radio(QRunnable):
         return dictAddressTx
     
     def initRadio(self):
-        self.nrf.open_tx_pipe(b"1Node")
+        self.nrf.open_tx_pipe(b"TEST4")
+        self.nrf.open_rx_pipe(1, b"TEST5") # comprendre pipe / adresse
         #for node in self.dictAddress.keys():
-        self.nrf.open_rx_pipe(1, b"2Node") # comprendre pipe / adresse
+        #self.nrf.open_rx_pipe(1, b"TEST2") # comprendre pipe / adresse
         self.nrf.listen = True
         print(f"{Fore.GREEN}INFO (radio) -> Radio ready for receiving...")
         
@@ -71,12 +72,12 @@ class Radio(QRunnable):
         csn = digitalio.DigitalInOut(board.D5)
         spi = board.SPI()  # init spi bus object
         self.nrf = RF24(spi, csn, ce)
-        self.nrf.pa_level = -18
+        self.nrf.pa_level = -12
         self.radioIrqPin = 12
         self.nrf.channel = 100
 
-        GPIO.setup(self.radioIrqPin, GPIO.IN, pull_up_down=GPIO.PUD_UP)
-        GPIO.add_event_detect(self.radioIrqPin, GPIO.FALLING, callback=self.read)
+        #GPIO.setup(self.radioIrqPin, GPIO.IN, pull_up_down=GPIO.PUD_UP)
+        #GPIO.add_event_detect(self.radioIrqPin, GPIO.FALLING, callback=self.read)
         
     def read(self, event):
         #self.nrf.listen = True
