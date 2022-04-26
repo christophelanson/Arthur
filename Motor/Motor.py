@@ -16,8 +16,6 @@ class Motor(QRunnable):
         super(Motor, self).__init__()
         self.hardwareName = "motor"
         self.dataBase = DataBase.DataBase(id=self.hardwareName)
-        
-        
         self.isStop = False
         self.INA = 20
         self.INB = 19

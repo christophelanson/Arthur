@@ -23,7 +23,7 @@ class Camera(QRunnable):
     def on_message(self, client, data, message):
         self.mqtt.decodeMessage(message=message)
 
-        if self.mqtt.lastCommand == "capture":
+        if self.mqtt.lastCommand == "command":
             self.capture()
     
 

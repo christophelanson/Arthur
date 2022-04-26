@@ -5,15 +5,16 @@ class DataBase:
 
     def __init__(self, id):
 
-
-        self.db = QtSql.QSqlDatabase.addDatabase('QSQLITE',id)
-        self.db.setDatabaseName('robotDb.sqlite')
-
+        if True:
+            self.db = QtSql.QSqlDatabase.addDatabase('QSQLITE',id)
+            self.db.setDatabaseName("file::memory:?cache=share")
+        else:
+            self.db = QtSql.QSqlDatabase.database("main")
         if not self.db.open():
             print(f"{Fore.RED}ERROR (hardwareHandler) -> Error while lauching database")
             exit(0)
         else:
-            print("Database open")
+            print(f"{Fore.GREEN}INFO (DataBase/{id}) -> Database handler open")
         
         self.query = QtSql.QSqlQuery(self.db)
         
@@ -35,7 +36,12 @@ class DataBase:
     def insertSensorValue(self, listSensor):
        # self.db.open()
         for sensor in listSensor:
-            request = "INSERT OR REPLACE INTO SensorValue (sensor, value) " "VALUES ('"+str(sensor)+"', 0-0-0-0)"
+            if sensor == "motor":
+                request = "INSERT OR REPLACE INTO SensorValue (sensor, value) " "VALUES ('"+str(sensor)+"', '0-0-0-0-0')"
+            elif sensor == "miniLidar":
+                request = "INSERT OR REPLACE INTO SensorValue (sensor, value) " "VALUES ('"+str(sensor)+"', '0')"
+            else:
+                request = "INSERT OR REPLACE INTO SensorValue (sensor, value) " "VALUES ('"+str(sensor)+"', '0-0-0')"
             self.query.exec_(request)
         #self.db.close()
     

@@ -1,7 +1,7 @@
 import paho.mqtt.client as mqtt
 from Json import Json
-import os
 import sys
+from colorama import Fore
 sys.path.append(".")
 
 class Mqtt:
@@ -29,7 +29,8 @@ class Mqtt:
             if hardware != self.hardwareName:
                 channel = hardware+"/"+self.hardwareName
                 self.client.subscribe(channel)
-                print(self.hardwareName, "subscribe to", channel)
+                print(f"{Fore.GREEN}INFO (MQTT/{self.hardwareName}) -> self.hardwareName, subscribe to, {channel}")
+
 
         self.client.loop_start()
     

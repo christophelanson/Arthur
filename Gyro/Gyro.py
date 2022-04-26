@@ -6,6 +6,8 @@ from PyQt5.QtCore import *
 from PyQt5.QtGui import *
 from PyQt5.QtWidgets import *
 from DataBase import DataBase
+from colorama import Fore
+import random
 
 
 AddressCOMPASS = 0x02
@@ -42,25 +44,19 @@ class Compass(QRunnable):
 
     @pyqtSlot()
     def run(self):
-        print("Thread", self.hardwareName, "is running")
+        print(f"{Fore.GREEN}INFO ({self.hardwareName}) -> thread is running")
         while True:
             sleep(0.1)
             self.sendValue()
-        self.timer = QTimer()
-        self.timer.timeout.connect(self.sendValue)
-        print("Thread", self.hardwareName, "is running")
-        self.timer.start(self.speedData)
 
     @pyqtSlot()
     def stop(self):
-        print(self.hardwareName, "closed")
+        print(f"{Fore.GREEN}INFO ({self.hardwareName}) -> thread is closed")
         exit(0)
         
     def sendValue(self):
         value = self.getSensorValue()
         self.dataBase.updateSensorValue("gyro", value)
-        #message = "gyroValue/" + self.getSensorValue()
-        #self.mqtt.sendMessage(message=message, receiver="motor")
 
     def setSpeedData(self):
         self.speedData = self.mqtt.lastPayload
@@ -68,6 +64,7 @@ class Compass(QRunnable):
         self.timer.start(self.speedData)
 
     def getSensorValue(self):
+        #return random.randrange(1000)
         compass = self.readRegister16bits(AddressCOMPASS)/10
         pitch = self.readRegister8bits(AddressPITCH)
         roll = self.readRegister8bits(AddressROLL)
