@@ -6,17 +6,16 @@ from PyQt5.QtCore import *
 from PyQt5.QtGui import *
 from PyQt5.QtWidgets import *
 from Mqtt import Mqtt
+from DataBase import DataBase
+
   
 class Motor(QRunnable):
 
-    def __init__(self, messageRouter:MessageRouter, hardwareId):
+    def __init__(self):
+        
         super(Motor, self).__init__()
         self.hardwareName = "motor"
-        self.hardwareId = hardwareId
-        self.messageRouter = messageRouter
-        self.isCommand = False
-        self.command = []
-        
+        self.dataBase = DataBase.DataBase(id=self.hardwareName)
         self.isStop = False
         self.INA = 20
         self.INB = 19
@@ -38,36 +37,40 @@ class Motor(QRunnable):
         GPIO.setup(self.INA, GPIO.OUT, initial=GPIO.LOW)
         GPIO.setup(self.ENB, GPIO.OUT, initial=GPIO.LOW)
         GPIO.setup(self.INB, GPIO.OUT, initial=GPIO.LOW)
-        # Set the PWM pin and frequency is 2000hz
+        # Set the PWM pin and frequency     [Errno 121] Remote I/O erroris 2000hz
         self.pwm_ENA = GPIO.PWM(self.ENA, 2000)
         self.pwm_ENB = GPIO.PWM(self.ENB, 2000)
-        #self.gyro = Gyro.Compass()
         self.startDirection = 0
         self.state = "init"
 
         self.listChannel = ["all"]
         self.mqtt = Mqtt.Mqtt(hardwareName=self.hardwareName, on_message=self.on_message, listChannel=self.listChannel)
 
+        self.gyroValue = 0
+        self.messageReceived = False
 
     def on_message(self, client, data, message):
-        print("message topic:", message.topic)
-        print("message", str(message.payload.decode()))
-
-
+        self.mqtt.decodeMessage(message=message)
+        if self.mqtt.lastCommand == "getState":
+            message = "state/" + self.state
+            self.mqtt.sendMessage(message=message, receiver=self.mqtt.lastSender)
+    
+        if self.mqtt.lastCommand == "command":
+            self.executeCommand(self.mqtt.lastPayload)
+        
+        if self.mqtt.lastCommand == "gyroValue":
+            self.gyroValue = int(self.mqtt.lastPayload.split("-")[0])
+        self.messageReceived = False
+        
     @pyqtSlot()
     def run(self):
-        while True:
-            pass
-            #if self.isCommand:
-             #   self.executeCommand()
-             #   self.isCommand = False
-            #time.sleep(0.1)
-            #self.state = "ready"    def get(self, command):
+            print("Thread", self.hardwareName, "is running")
     
-    def get(self, command):
-        if command == "getState":
-            return self.state
 
+    @pyqtSlot()
+    def stop(self):
+        print(self.hardwareName, "closed")
+        exit(0)
 
     def stop(self):
         self.pwm_ENA.stop()
@@ -78,14 +81,26 @@ class Motor(QRunnable):
         self.isStop = False
         self.state = "stop"
     
-    def gyro(self,command):
-        return self.messageRouter.route(senderName=self.node, receiverName=self.node, hardware="gyro", command=command, isReturn=False, channel="own")
-    
+    def getGyroValue(self):
+        #print(self.dataBase.getSensorValue("gyro"))
+        return float(self.dataBase.getSensorValue("gyro").split("-")[0])
+        
+        #return self.messageRouter.route(senderName=self.node, receiverName=self.node, hardware="gyro", command=command, isReturn=False, channel="own")
+        
     def calculateCorrectionRun(self, currentSpeed):
-        currentDirection = self.gyro(command="COMPASS")
-        correctionRun = self.startDirection - currentDirection # fonction à vérifier
+        currentDirection = self.getGyroValue()
+
+        deltaCompass = self.startDirection - currentDirection
+
+        if deltaCompass < -180:
+            deltaCompass += 360
+        elif deltaCompass > 180:
+            deltaCompass -= 360
+
+        correctionRun = (deltaCompass*5) / 180 # fonction à vérifier
         currentSpeedRight = currentSpeed * (1 - correctionRun)
         currentSpeedLeft = currentSpeed * (1 + correctionRun)
+        #print(self.startDirection, currentDirection, currentSpeedLeft, currentSpeedRight)
         return currentSpeedLeft, currentSpeedRight
 
     def calculateCorrectionTurn(self, currentSpeedLeft, currentSpeedRight):
@@ -121,9 +136,9 @@ class Motor(QRunnable):
 
     def move(self, timeMove, direction, initSpeed, maxSpeed, finalSpeed):
         self.state = "running"
-        self.startDirection = self.gyro()
+        self.startDirection = self.getGyroValue()
         nominalTime = timeMove - (self.dT * 12)
-        nbDtNominalTime = int(nominalTime / self.dt)
+        nbDtNominalTime = int(nominalTime / self.dT)
         addzero = list(np.zeros((nbDtNominalTime)))
         self.listStep = self.listStepUp + addzero + self.listStepDown
         currentSpeed = initSpeed
@@ -133,12 +148,9 @@ class Motor(QRunnable):
                 break
             else:
                 currentSpeed, currentSpeedLeft, currentSpeedRight = self.calculateSpeedRun(i, currentSpeed, maxSpeed)
-                #self.listSpeed.append(currentSpeed)
-                #self.listSpeedRight.append(currentSpeedRight)
-                #self.listSpeedLeft.append(currentSpeedLeft)
-                #timeStep = nominalTime if self.listStep[i] == 0 else self.dT
                 self.driveMotor(currentSpeedLeft, currentSpeedRight, self.dT, direction)
         self.stop()
+        print("MOTOR STOP")
 
     def turn(self, timeMove, direction, initSpeed, maxSpeed, finalSpeed, maxRotSpeed):
         self.state = "turning"
@@ -175,19 +187,23 @@ class Motor(QRunnable):
                 self.driveMotor(currentSpeedLeft, currentSpeedRight, timeStep, direction)
         self.stop()
 
-        #plt.figure()
-       # plt.plot(self.listSpeedRight)
-        #plt.plot(self.listSpeedLeft)
+    def executeCommand(self, command):
+        
+        command = command.split("-")
+        action = command[0]
+        payload = command[1:]
+        payload = [float(i) for i in payload]
 
-    def executeCommand(self):
-        action = self.command[0]
-        self.payload = self.command[1:]
-        if action == self.messageRouter.dictCommand["RUN"]:
-            self.move(self.payload[0], self.payload[1], self.payload[2], self.payload[3], self.payload[4])
-        if action == self.messageRouter.dictCommand["TURN"]:
-            self.move(self.payload[0], self.payload[1], self.payload[2], self.payload[3], self.payload[4], self.payload[5])
-        if action == self.messageRouter.dictCommand["STOP"]:
-            self.isStop = True
+        print(action, payload)
+        if action == "run":
+            print("Motor start run")
+            self.move(payload[0], payload[1], payload[2], payload[3], payload[4])
+        if action == "TURN":
+            print("Motor start turn")
+            self.move(payload[0], payload[1], payload[2], payload[3], payload[4], payload[5])
+        if action == "STOP":
+            print("Motor stopped")
+            self.stop
             
 
 if __name__ == "__main__":

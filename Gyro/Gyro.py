@@ -1,35 +1,74 @@
 import smbus
 from time import sleep 
+from Mqtt import Mqtt
+from PyQt5.QtCore import QTimer
+from PyQt5.QtCore import *
+from PyQt5.QtGui import *
+from PyQt5.QtWidgets import *
+from DataBase import DataBase
+from colorama import Fore
+import random
 
 
 AddressCOMPASS = 0x02
 AddressPITCH = 0x04
 AddressROLL = 0x05
 
-class Compass:
+class Compass(QRunnable):
 
-    def __init__(self, messageRouter):
-        self.messageRouter = messageRouter
-        self.hardwareName = "Gyro"
+    def __init__(self):
+        super(Compass, self).__init__()
+        self.hardwareName = "gyro"
+        self.dataBase = DataBase.DataBase(id=self.hardwareName)
+        
         self.state = "ready"
         self.bus = smbus.SMBus(1) 
         self.Device_Address = 0x60  
         self.bus.write_byte_data(self.Device_Address, 0, 1)
-    
-    def get(self, command):
-        if command == "state":
-            return self.state
-        if command == "COMPASS":
-            return self.readRegister16bits(AddressCOMPASS)/10
-            #print("Angle compass:", compass)
-        elif command == "PITCH":
-            return self.readRegister8bits(AddressPITCH)
-            #print("Pitch :", compass)
-        elif command == "ROLL":
-            return self.readRegister8bits(AddressROLL)
-        else:
-            print("Unknow argument:", command)
-            return None
+        self.state = "init"
+
+        self.listChannel = ["all"]
+        self.mqtt = Mqtt.Mqtt(hardwareName=self.hardwareName, on_message=self.on_message, listChannel=self.listChannel)
+        self.speedData = 1
+ 
+
+    def on_message(self, client, data, message):
+        self.mqtt.decodeMessage(message=message)
+
+        if self.mqtt.lastCommand == "getSensorValue":
+            message = "value/" + self.getSensorValue()
+            self.mqtt.sendMessage(message=message, receiver=self.mqtt.lastSender)
+        
+        if self.mqtt.lastCommand == "setSpeedData":
+           self.setSpeedData()
+
+    @pyqtSlot()
+    def run(self):
+        print(f"{Fore.GREEN}INFO ({self.hardwareName}) -> thread is running")
+        while True:
+            sleep(0.1)
+            self.sendValue()
+
+    @pyqtSlot()
+    def stop(self):
+        print(f"{Fore.GREEN}INFO ({self.hardwareName}) -> thread is closed")
+        exit(0)
+        
+    def sendValue(self):
+        value = self.getSensorValue()
+        self.dataBase.updateSensorValue("gyro", value)
+
+    def setSpeedData(self):
+        self.speedData = self.mqtt.lastPayload
+        self.timer.stop()
+        self.timer.start(self.speedData)
+
+    def getSensorValue(self):
+        #return random.randrange(1000)
+        compass = self.readRegister16bits(AddressCOMPASS)/10
+        pitch = self.readRegister8bits(AddressPITCH)
+        roll = self.readRegister8bits(AddressROLL)
+        return str(compass)+"-"+str(pitch)+"-"+str(roll)
         
     def readRegister16bits(self, addr):        
             high = self.bus.read_byte_data(self.Device_Address, addr)

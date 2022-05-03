@@ -97,7 +97,7 @@ class UI(QRunnable):
         self.show()
       
     def getState(self):
-        self.mqtt.client.publish("all","get state")
+        self.mqtt.client.publish("all","motor/get state")
 
     def sendCommand(self):
 

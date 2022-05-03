@@ -2,9 +2,5 @@
 "fullName": "Arthur",
 "name": "A",
 "node" : 1,
-"isLidar": true,
-"isCamera": true,
-"isMotor": true,
-"isGyro": true,
-"isMiniLidar": true
+"modules" : ["main", "lidar", "miniLidar", "gyro", "motor", "camera"]
 }

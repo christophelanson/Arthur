@@ -2,29 +2,37 @@ import os
 from PyQt5.QtCore import *
 from PyQt5.QtGui import *
 from PyQt5.QtWidgets import *
-print("hello")
+from Mqtt import Mqtt
+
+
 class Camera(QRunnable):
     
-    def __init__(self, messageRouter, hardwareId):
+    def __init__(self, database):
         super(Camera, self).__init__()
-        self.messageRouter = messageRouter
+        self.dataBase = database
         self.hardwareName = "camera"
-        self.hardwareId = hardwareId
         self.photoPath = "../Log/Images/"
         self.isCapture = False
         self.numeroDeFichier = 0 
     
-    def capture(self):
-        os.system("raspistill -vf -hf -o "+self.photoPath+str(self.numeroDeFichier))
+        self.listChannel = ["all"]
+        self.mqtt = Mqtt.Mqtt(hardwareName=self.hardwareName, on_message=self.on_message, listChannel=self.listChannel)
+
+        self.gyroValue = 0
+
+    def on_message(self, client, data, message):
+        self.mqtt.decodeMessage(message=message)
+
+        if self.mqtt.lastCommand == "command":
+            self.capture()
     
-    def get(self, command):
-        if command == "getState":
-            return self.state
 
     @pyqtSlot()
     def run(self):
-        while True:
-            if self.isCapture:
-                self.capture()
-                self.isCapture = False
+            print("Thread", self.hardwareName, "is running")
+    
+    def capture(self):
+        os.system("raspistill -vf -hf -o "+self.photoPath+str(self.numeroDeFichier))
+    
+
 
