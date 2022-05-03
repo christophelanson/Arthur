@@ -20,7 +20,7 @@ class Lidar(QRunnable):
         super(Lidar, self).__init__()
         self.hardwareName = "lidar"
         self.dataBase = DataBase.DataBase(id=self.hardwareName)
-        self.ser = serial.Serial(port='/dev/tty.lachatteachristian', baudrate='115200') #/dev/ttyUSB0
+        self.ser = serial.Serial(port='/dev/ttyUSB0', baudrate='115200') #/dev/ttyUSB0
         self.ser.close()
         self.dict_angle_distance = {} # dictionnaire angles et distances classés par paquets angulaire d'amplitude 0,5° : dimension 720 lignes
         self.outputDataList = [] # liste de données collectées sans classement par paquet : dimension 7.200 lignes

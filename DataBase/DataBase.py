@@ -7,7 +7,7 @@ class DataBase:
 
         if True:
             self.db = QtSql.QSqlDatabase.addDatabase('QSQLITE',id)
-            self.db.setDatabaseName("file::memory:?cache=share")
+            self.db.setDatabaseName("robotDB") #"file::memory:?cache=share"
         else:
             self.db = QtSql.QSqlDatabase.database("main")
         if not self.db.open():

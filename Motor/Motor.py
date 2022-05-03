@@ -97,10 +97,10 @@ class Motor(QRunnable):
         elif deltaCompass > 180:
             deltaCompass -= 360
 
-        correctionRun = deltaCompass / 180 # fonction à vérifier
+        correctionRun = (deltaCompass*5) / 180 # fonction à vérifier
         currentSpeedRight = currentSpeed * (1 - correctionRun)
         currentSpeedLeft = currentSpeed * (1 + correctionRun)
-        print(self.startDirection, currentDirection, currentSpeedLeft, currentSpeedRight)
+        #print(self.startDirection, currentDirection, currentSpeedLeft, currentSpeedRight)
         return currentSpeedLeft, currentSpeedRight
 
     def calculateCorrectionTurn(self, currentSpeedLeft, currentSpeedRight):
@@ -150,6 +150,7 @@ class Motor(QRunnable):
                 currentSpeed, currentSpeedLeft, currentSpeedRight = self.calculateSpeedRun(i, currentSpeed, maxSpeed)
                 self.driveMotor(currentSpeedLeft, currentSpeedRight, self.dT, direction)
         self.stop()
+        print("MOTOR STOP")
 
     def turn(self, timeMove, direction, initSpeed, maxSpeed, finalSpeed, maxRotSpeed):
         self.state = "turning"

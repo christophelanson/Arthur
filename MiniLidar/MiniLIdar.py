@@ -18,9 +18,9 @@ class MiniLidar(QRunnable):
         self.port1 = 21
         self.isCounting = False
         self.timeStart = 0 
-        #GPIO.setmode(GPIO.BCM)
-        #GPIO.setwarnings(False)
-        #GPIO.setup(self.port1, GPIO.IN)
+        GPIO.setmode(GPIO.BCM)
+        GPIO.setwarnings(False)
+        GPIO.setup(self.port1, GPIO.IN)
 
         self.listChannel = ["all"]
         self.mqtt = Mqtt.Mqtt(hardwareName=self.hardwareName, on_message=self.on_message, listChannel=self.listChannel)
@@ -42,7 +42,7 @@ class MiniLidar(QRunnable):
     def run(self):
             print(f"{Fore.GREEN}INFO ({self.hardwareName}) -> thread is running")
             while True:
-                time.sleep(0.1)
+                time.sleep(1)
                 self.sendValue()
     
     @pyqtSlot()
@@ -61,9 +61,10 @@ class MiniLidar(QRunnable):
             if self.isCounting:
                 if signal == 0:
                     pulseWidth = (time.time() - self.timeStart)*1000000
-                    print("pulseWidth:", pulseWidth)
+                    #print("pulseWidth:", pulseWidth)
                     distance = 2*(pulseWidth - 1000)
-                    print("Distance:", distance)
+                    #
+                    # print("Distance:", distance)
                     self.isCounting = False
                     self.timeStart = 0
                     return distance

@@ -11,11 +11,11 @@ sys.path.append(".")
 from Mqtt import Mqtt
 from HardwareHandler import HardwareHandler #Permet de creer un hardware et d'executer son code en //, les hardwares fonctionnelles sont stockés dans un dictionnaire
 #from UI import UI  #Interface graphique
-#import Motor
-from Lidar import Lidar
-#from MiniLidar import MiniLIdar
-#from Camera import Camera
-#from Gyro import Gyro
+from  Motor import Motor
+from Lidar import lidar
+from MiniLidar import MiniLIdar
+from Camera import Camera
+from Gyro import Gyro
 #from Radio import Radio
 from DataBase import DataBase
 
@@ -30,22 +30,22 @@ class Main(QMainWindow):
         print(f"{Fore.GREEN}INFO (main) -> Initialising {idRobot}")
         listSensor = ["gyro", "miniLidar", "motor"] 
         self.dataBase = DataBase.DataBase("main")
-        #self.dataBase.initSensorTable(listSensor)
+        self.dataBase.initSensorTable(listSensor)
         # créer chaque hardware
         self.hardwareHandler = HardwareHandler.HardwareHandler()
         # 1er paramètre : nom du hardware, 2 ème paramètre class du hardware, 3 ème paramètre paramètre d'init de la classe
 
         #self.hardwareHandler.addHardware("radio", Radio.Radio)
 
-        #self.hardwareHandler.addHardware("motor", Motor.Motor)
+        self.hardwareHandler.addHardware("motor", Motor.Motor)
 
         #self.hardwareHandler.addHardware("camera", Camera.Camera)
 
-        self.hardwareHandler.addHardware("lidar", Lidar.Lidar)
+        #self.hardwareHandler.addHardware("lidar", lidar.Lidar)
 
         #self.hardwareHandler.addHardware("miniLidar", MiniLIdar.MiniLidar)
 
-        #self.hardwareHandler.addHardware("gyro", Gyro.Compass)
+        self.hardwareHandler.addHardware("gyro", Gyro.Compass)
 
         #self.hardwareHandler.addHardware("ui", UI.UI, hardwareId)
 
