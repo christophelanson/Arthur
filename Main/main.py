@@ -16,7 +16,7 @@ from Lidar import lidar
 from MiniLidar import MiniLIdar
 from Camera import Camera
 from Gyro import Gyro
-#from Radio import Radio
+from Radio import Radio
 from DataBase import DataBase
 
 
@@ -35,7 +35,7 @@ class Main(QMainWindow):
         self.hardwareHandler = HardwareHandler.HardwareHandler()
         # 1er paramètre : nom du hardware, 2 ème paramètre class du hardware, 3 ème paramètre paramètre d'init de la classe
 
-        #self.hardwareHandler.addHardware("radio", Radio.Radio)
+        self.hardwareHandler.addHardware("radio", Radio.Radio)
 
         self.hardwareHandler.addHardware("motor", Motor.Motor)
 

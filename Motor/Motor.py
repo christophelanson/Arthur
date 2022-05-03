@@ -18,8 +18,8 @@ class Motor(QRunnable):
         self.dataBase = DataBase.DataBase(id=self.hardwareName)
         self.gyro = Gyro.Compass()
         self.isStop = False
-        self.INA = 20
-        self.INB = 19
+        self.INA = 26  #20 => 26
+        self.INB = 6     #19 => 6
         self.ENA = 16
         self.ENB = 13
         self.dT = 0.08

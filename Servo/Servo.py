@@ -14,7 +14,7 @@ class PyboticsHandler:
     def __init__(self):
         self.robot = Robot.from_parameters(ur10())
     
-    def calculateServoAngle(self, postion):
+    def calculateServoAngle(self, position):
         res = self.robot.ik(position)
         print(res)
         return res
@@ -48,8 +48,8 @@ class Servo:
         self.pyboticsHandler = PyboticsHandler()
         self.cardServo = CardServo()
     
-    def calculateAngle(self, postion):
-        angles = self.pyboticsHandler.calculateServoAngle(postion)
+    def calculateAngle(self, position):
+        angles = self.pyboticsHandler.calculateServoAngle(position)
         return angles
     
     def servoControler(self, angles):
@@ -58,13 +58,16 @@ class Servo:
             self.cardServo.move(i, angle)
             #time.sleep(1.5)
     
-    def move(self,postion):
+    def move(self,position):
         angles = self.calculateAngle(position)
         print(angles)
-        #self.servoControler(angles)
+        self.servoControler(angles)
         
         
 if __name__ == "__main__":
     servo = Servo()
-    position =  vector_2_matrix([600, -150, 800, 0, 0, 0])
-    servo.move(position)
+    #position =  vector_2_matrix([600, -150, 800, 100, 000, 0])
+    #servo.move(position)
+    pulses=[1.3,1.6,1.6,2,1.1,1.2]
+    servo.servoControler(pulses)
+    #servo.cardServo.move(2,1.6)

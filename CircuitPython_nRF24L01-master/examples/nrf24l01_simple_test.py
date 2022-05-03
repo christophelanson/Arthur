@@ -60,6 +60,8 @@ payload = [0.0]
 # nrf.dynamic_payloads = False
 # nrf.payload_length = 4
 
+nrf.print_details()
+nrf.print_pipes()
 
 def master(count=5):  # count = 5 will only transmit 5 packets
     """Transmits an incrementing integer every second"""
@@ -145,3 +147,4 @@ if __name__ == "__main__":
         nrf.power = False
 else:
     print("    Run slave() on receiver\n    Run master() on transmitter")
+11
