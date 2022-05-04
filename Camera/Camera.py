@@ -35,4 +35,6 @@ class Camera(QRunnable):
         os.system("raspistill -vf -hf -o "+self.photoPath+str(self.numeroDeFichier))
     
 
-
+if __name__ == "__main__":
+    camera = Camera()
+    camera.capture()

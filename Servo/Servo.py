@@ -25,20 +25,29 @@ class CardServo:
     def __init__(self):
 
         self.pwm = Adafruit_PCA9685.PCA9685(address=0x41)
-        servo_min = 150  # Minimale Pulslaenge
-        servo_max = 600  # Maximale Pulslaenge
+        self.servo_min = 100  # Minimale Pulslaenge
+        self.servo_max = 525  # Maximale Pulslaenge
         self.pwm.set_pwm_freq(50)
 
     def move(self, channel, pulse):
-        pulse_length = 1000000 
-        pulse_length /= 50     
-        pulse_length /= 4096     
-        pulse *= 1000
-        pulse /= pulse_length
-        pulse = round(pulse)
+        #pulse_length = 1000000 
+        #pulse_length /= 50     
+        #pulse_length /= 4096     
+        #pulse *= 1000
+        #pulse /= pulse_length
+        #pulse = round(pulse)
         pulse = int(pulse)
         print("pulse", pulse)
         self.pwm.set_pwm(channel, 0, pulse)
+
+    def angle_to_pulse(self,angle):
+        """
+        return a pulse from an angle in degrees
+        angle range from 0 to 180
+        pulse range from servo_min to servo_max
+        """
+        pulse = self.servo_min + angle * (self.servo_max - self.servo_min)/180
+        return pulse
 
 
     
@@ -55,7 +64,7 @@ class Servo:
     def servoControler(self, angles):
         for i, angle in enumerate(angles):
             print("angle", i, angle)
-            self.cardServo.move(i, angle)
+            self.cardServo.move(i, self.cardServo.angle_to_pulse(angle))
             #time.sleep(1.5)
     
     def move(self,position):
@@ -68,6 +77,6 @@ if __name__ == "__main__":
     servo = Servo()
     #position =  vector_2_matrix([600, -150, 800, 100, 000, 0])
     #servo.move(position)
-    pulses=[1.3,1.6,1.6,2,1.1,1.2]
-    servo.servoControler(pulses)
+    angles=[90,120,100,100,90,30]
+    servo.servoControler(angles)
     #servo.cardServo.move(2,1.6)
