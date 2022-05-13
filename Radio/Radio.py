@@ -86,7 +86,7 @@ class Radio(QRunnable):
         
     def read(self, event):
         print("Received", self.nrf.any(), "on pipe", self.nrf.pipe, ":")
-        message = self.nrf.read()
+        message = self.nrf.read().decode()
         self.nrf.update()
         print(message)
         

@@ -18,7 +18,7 @@ class MiniLidar(QRunnable):
         super(MiniLidar, self).__init__()
         self.hardwareName = "miniLidar"
         #self.dataBase = DataBase.DataBase(id=self.hardwareName)
-        self.port1 = 18
+        self.port1 = 24 # GPIO24 pin 18
         self.isCounting = False
         self.timeStart = 0 
         GPIO.setmode(GPIO.BCM)
@@ -45,7 +45,7 @@ class MiniLidar(QRunnable):
     def run(self):
             print(f"{Fore.GREEN}INFO ({self.hardwareName}) -> thread is running")
             while True:
-                time.sleep(1)
+                time.sleep(0.1)
                 self.sendValue()
     
     @pyqtSlot()
@@ -55,7 +55,7 @@ class MiniLidar(QRunnable):
 
     def sendValue(self):
         value = str(self.getSensorValue())
-        self.Mqtt.sendMessage(message=value, receiver="main", awnserNeeded=False)
+        self.mqtt.sendMessage(message="state/"+value, receiver="main", awnserNeeded=False)
         #self.dataBase.updateSensorValue("miniLidar", value)
 
     def getSensorValue(self):

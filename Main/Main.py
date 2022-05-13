@@ -45,7 +45,7 @@ class Main(QMainWindow):
 
         #self.hardwareHandler.addHardware("lidar", lidar.Lidar)
 
-        #self.hardwareHandler.addHardware("miniLidar", MiniLidar.MiniLidar)
+        self.hardwareHandler.addHardware("miniLidar", MiniLidar.MiniLidar)
 
         #self.hardwareHandler.addHardware("gyro", Gyro.Compass)
 
@@ -53,7 +53,7 @@ class Main(QMainWindow):
         
         self.gyro = Gyro.Compass()
 
-        self.miniLidar = MiniLidar.MiniLidar()
+        #self.miniLidar = MiniLidar.MiniLidar()
 
         self.lidar = Lidar.Lidar()
 
@@ -127,18 +127,19 @@ class Main(QMainWindow):
         self.mqtt = Mqtt.Mqtt(hardwareName="main", on_message=self.on_message, listChannel=self.listChannel)
 
         timer = QTimer(self)
-        timer.setInterval(100)
+        timer.setInterval(500)
         timer.timeout.connect(self.updateBoard)
         timer.start()
         
 
     def updateBoard(self):
+        
         gyroValue = str(self.gyro.getSensorValue()).split("-")
         compass = gyroValue[0]
         picth = gyroValue[1]
         roll = gyroValue[2]
 
-        miniLidarValue = str(round(self.miniLidar.getSensorValue()))
+        # miniLidarValue = str(round(self.miniLidar.getSensorValue()))
 
         motorValue = self.dataBase.getSensorValue("motor").split("-")
         motorSpeed = str(motorValue[3])
@@ -146,7 +147,7 @@ class Main(QMainWindow):
         motorTime = str(motorValue[0])
 
         self.gyroValue.setText(f"Gyro value : \n\tCompass: {compass} Pitch: {picth} Roll: {roll} ")
-        self.miniLidarValue.setText(f"MiniLidar value : \n\t Distance : {miniLidarValue}")
+        # self.miniLidarValue.setText(f"MiniLidar value : \n\t Distance : {miniLidarValue}")
         self.motorSpeed.setPlaceholderText(motorSpeed)
         self.motorDirection.setPlaceholderText(motorDirection)
         self.motorTime.setPlaceholderText(motorTime)
@@ -165,10 +166,9 @@ class Main(QMainWindow):
         self.mqtt.decodeMessage(message=message)
 
         if self.mqtt.lastCommand == "state":
-            print("State,", self.mqtt.lastSender, "is", self.mqtt.lastPayload)
-
-    def on_message(self, client, data, message):
-        self.mqtt.decodeMessage(message=message)
+            #print("State,", self.mqtt.lastSender, "is", self.mqtt.lastPayload)
+            if self.mqtt.lastSender == "miniLidar":
+                self.miniLidarValue.setText(f"MiniLidar value : \n\t Distance : {round(float(self.mqtt.lastPayload))}")
         
     def runMotor(self):
         payload = str(self.motorTime.text()) + "-" + str(self.motorDirection.text()) + "-0-" + str(self.motorSpeed.text()) + "-0"
