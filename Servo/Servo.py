@@ -3,7 +3,6 @@ import Adafruit_PCA9685
 import RPi.GPIO as GPIO
 import numpy as np
 from colorama import Fore
-
     
 class Servo:
     

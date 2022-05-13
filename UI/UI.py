@@ -39,8 +39,6 @@ class fileReader:
             fichier.write(newData)
             
 
-
-
 class UI(QRunnable):
 
     def __init__(self, hardwareHandler:HardwareHandler, hardwareId):

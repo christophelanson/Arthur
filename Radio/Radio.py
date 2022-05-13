@@ -86,8 +86,15 @@ class Radio(QRunnable):
         
     def read(self, event):
         print("Received", self.nrf.any(), "on pipe", self.nrf.pipe, ":")
-        print(self.nrf.read())
+        message = self.nrf.read()
         self.nrf.update()
+        print(message)
+        
+        hardware = message.split("_",1)[0]
+        messageToHardware = message.split("_",1)[1]
+        print(f"{Fore.GREEN}INFO (radio) -> hardware receiver: {hardware}")
+        print(f"{Fore.GREEN}INFO (radio) -> message to hardware: {messageToHardware}")
+        self.mqtt.sendMessage(message=messageToHardware, receiver=hardware)
         #self.initSpi()
         #self.initRadio()
             #messageReceived = self.nrf.read().split("/")
