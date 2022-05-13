@@ -1,3 +1,6 @@
+import sys
+sys.path.append(".")
+
 import RPi.GPIO as GPIO
 import time
 from Mqtt import Mqtt
@@ -14,8 +17,8 @@ class MiniLidar(QRunnable):
     def __init__(self):
         super(MiniLidar, self).__init__()
         self.hardwareName = "miniLidar"
-        self.dataBase = DataBase.DataBase(id=self.hardwareName)
-        self.port1 = 21
+        #self.dataBase = DataBase.DataBase(id=self.hardwareName)
+        self.port1 = 18
         self.isCounting = False
         self.timeStart = 0 
         GPIO.setmode(GPIO.BCM)
@@ -52,10 +55,10 @@ class MiniLidar(QRunnable):
 
     def sendValue(self):
         value = str(self.getSensorValue())
-        self.dataBase.updateSensorValue("miniLidar", value)
+        self.Mqtt.sendMessage(message=value, receiver="main", awnserNeeded=False)
+        #self.dataBase.updateSensorValue("miniLidar", value)
 
     def getSensorValue(self):
-        #return 345
         while True:
             signal = GPIO.input(self.port1)
             if self.isCounting:
@@ -63,8 +66,7 @@ class MiniLidar(QRunnable):
                     pulseWidth = (time.time() - self.timeStart)*1000000
                     #print("pulseWidth:", pulseWidth)
                     distance = 2*(pulseWidth - 1000)
-                    #
-                    # print("Distance:", distance)
+                    #print("Distance:", distance)
                     self.isCounting = False
                     self.timeStart = 0
                     return distance
@@ -78,4 +80,4 @@ class MiniLidar(QRunnable):
 if __name__ == "__main__":
     
     miniLidar = MiniLidar()
-    miniLidar.run()
+    miniLidar.getSensorValue()

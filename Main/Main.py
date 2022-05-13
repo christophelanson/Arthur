@@ -10,14 +10,14 @@ from PyQt5.QtWidgets import *
 sys.path.append(".")
 from Mqtt import Mqtt
 from HardwareHandler import HardwareHandler #Permet de creer un hardware et d'executer son code en //, les hardwares fonctionnelles sont stockés dans un dictionnaire
-#from UI import UI  #Interface graphique
-from  Motor import Motor
-from Lidar import lidar
-from MiniLidar import MiniLIdar
+from Motor import Motor
+from Lidar import Lidar
+from MiniLidar import MiniLidar
 from Camera import Camera
 from Gyro import Gyro
 from Radio import Radio
 from DataBase import DataBase
+from RoboticArm import RoboticArm
 
 
 class Main(QMainWindow):
@@ -33,25 +33,29 @@ class Main(QMainWindow):
         self.dataBase.initSensorTable(listSensor)
         # créer chaque hardware
         self.hardwareHandler = HardwareHandler.HardwareHandler()
-        # 1er paramètre : nom du hardware, 2 ème paramètre class du hardware, 3 ème paramètre paramètre d'init de la classe
+        # 1er paramètre : nom du hardware, 2 ème paramètre class du hardware
 
         self.hardwareHandler.addHardware("radio", Radio.Radio)
 
         self.hardwareHandler.addHardware("motor", Motor.Motor)
 
+        self.hardwareHandler.addHardware("roboticArm", RoboticArm.RoboticArm)
+
         #self.hardwareHandler.addHardware("camera", Camera.Camera)
 
         #self.hardwareHandler.addHardware("lidar", lidar.Lidar)
 
-        #self.hardwareHandler.addHardware("miniLidar", MiniLIdar.MiniLidar)
+        #self.hardwareHandler.addHardware("miniLidar", MiniLidar.MiniLidar)
 
         #self.hardwareHandler.addHardware("gyro", Gyro.Compass)
-
-        #self.hardwareHandler.addHardware("ui", UI.UI, hardwareId)
 
         self.hardwareHandler.runThreadHardware()
         
         self.gyro = Gyro.Compass()
+
+        self.miniLidar = MiniLidar.MiniLidar()
+
+        self.lidar = Lidar.Lidar()
 
         layout = QVBoxLayout()
 	
@@ -95,6 +99,8 @@ class Main(QMainWindow):
         self.miniLidarValue = QLabel()
         self.miniLidarValue.setText('Mini lidar value:')
 
+        layout.addWidget(self.witchRobotLabel)
+        layout.addWidget(self.witchRobot)
         layout.addWidget(b2)
         layout.addWidget(b3)
         layout.addWidget(b7)
@@ -132,7 +138,7 @@ class Main(QMainWindow):
         picth = gyroValue[1]
         roll = gyroValue[2]
 
-        miniLidarValue = str(self.dataBase.getSensorValue("miniLidar"))
+        miniLidarValue = str(round(self.miniLidar.getSensorValue()))
 
         motorValue = self.dataBase.getSensorValue("motor").split("-")
         motorSpeed = str(motorValue[3])
@@ -168,7 +174,7 @@ class Main(QMainWindow):
         payload = str(self.motorTime.text()) + "-" + str(self.motorDirection.text()) + "-0-" + str(self.motorSpeed.text()) + "-0"
         self.dataBase.updateSensorValue("motor", payload)
         payload = "run-" + str(self.motorTime.text()) + "-" + str(self.motorDirection.text()) + "-0-" + str(self.motorSpeed.text()) + "-0"
-        if self.witchRobot.text == self.idRobot:
+        if self.witchRobot.text() == str(self.idRobot["node"]):
             self.mqtt.sendMessage(message="command/"+payload, receiver="motor")
         else:
             payload = 'motor_'+ 'command/'+  payload

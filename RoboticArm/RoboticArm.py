@@ -5,6 +5,9 @@ sys.path.insert(0, './Servo')
 import math
 import numpy as np
 import Servo
+from PyQt5.QtCore import *
+from PyQt5.QtGui import *
+from PyQt5.QtWidgets import *
 from Mqtt import Mqtt
 
 class RoboticArm(QRunnable):
@@ -12,6 +15,7 @@ class RoboticArm(QRunnable):
     def __init__(self):
 
         super(RoboticArm, self).__init__()
+        self.hardwareName = "roboticArm"
         # définition des paramètres du bras
         self.dSE = 130 # distance shoulder-elbow en mm
         self.dEW = 98 # distance elbow-wrist en mm
