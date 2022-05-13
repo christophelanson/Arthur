@@ -99,7 +99,7 @@ class RoboticArm(QRunnable):
         
 if __name__ == "__main__":
     roboticArm = RoboticArm()
-    position = [70,250,200,0,90,80] # position du point M à atteindre [directionBras(degrés), xM(mm), zM(mm), incidencePince(degrés), rotationPince(degrés), ouverturePince(degrés)]
+    position = [60,200,100,-30,80,40] # position du point M à atteindre [directionBras(degrés), xM(mm), zM(mm), incidencePince(degrés), rotationPince(degrés), ouverturePince(degrés)]
     angles = roboticArm.calculateAngles(position)
     print(angles)
     angles = np.asarray(angles)
