@@ -63,6 +63,8 @@ class Radio(QRunnable):
         self.nrf.open_tx_pipe(b"NODE1")
 
         self.nrf.open_rx_pipe(1, b"NODE2") # comprendre pipe / adresse
+        #self.nrf.open_rx_pipe(2, b"NODE3") # comprendre pipe / adresse
+
         #for node in self.dictAddress.keys():
         #self.nrf.open_rx_pipe(1, b"TEST2") # comprendre pipe / adresse
         self.nrf.interrupt_config(data_sent=False, data_fail=False)
