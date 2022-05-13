@@ -7,7 +7,7 @@ import Adafruit_PCA9685
 import RPi.GPIO as GPIO
 import numpy as np
 from pybotics.geometry import vector_2_matrix
-
+from Mqtt import Mqtt
 
 class PyboticsHandler:
     
@@ -50,12 +50,31 @@ class CardServo:
         return pulse
 
 
-    
-class Servo:
+class Servo(QRunnable):
     
     def __init__(self):
+        super(Servo, self).__init__()
         self.pyboticsHandler = PyboticsHandler()
         self.cardServo = CardServo()
+
+        self.listChannel = ["all"]
+        self.mqtt = Mqtt.Mqtt(hardwareName=self.hardwareName, on_message=self.on_message, listChannel=self.listChannel)
+
+        self.gyroValue = 0
+        self.messageReceived = False
+
+    def on_message(self, client, data, message):
+        self.mqtt.decodeMessage(message=message)
+        
+    @pyqtSlot()
+    def run(self):
+            print("Thread", self.hardwareName, "is running")
+    
+
+    @pyqtSlot()
+    def stop(self):
+        print(self.hardwareName, "closed")
+        exit(0)
     
     def calculateAngle(self, position):
         angles = self.pyboticsHandler.calculateServoAngle(position)
