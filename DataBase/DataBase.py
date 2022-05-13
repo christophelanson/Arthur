@@ -53,9 +53,10 @@ class DataBase:
 
     def getSensorValue(self, sensor):
         #self.db.open()
-        self.query.exec("SELECT sensor, value FROM SensorValue")
-        while(self.query.next()):
-            if self.query.value(0) == sensor:
-                return self.query.value(1)
+        #self.query.exec("SELECT sensor, value FROM SensorValue")
+        #while(self.query.next()):
+        #   if self.query.value(0) == sensor:
+        #       return self.query.value(1)
         #self.db.close()
+        return "0-0-0-0"
 

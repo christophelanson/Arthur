@@ -7,7 +7,7 @@ from PyQt5.QtGui import *
 from PyQt5.QtWidgets import *
 from Mqtt import Mqtt
 from DataBase import DataBase
-
+from Gyro import Gyro
   
 class Motor(QRunnable):
 
@@ -16,9 +16,10 @@ class Motor(QRunnable):
         super(Motor, self).__init__()
         self.hardwareName = "motor"
         self.dataBase = DataBase.DataBase(id=self.hardwareName)
+        self.gyro = Gyro.Compass()
         self.isStop = False
-        self.INA = 20
-        self.INB = 19
+        self.INA = 26  #20 => 26
+        self.INB = 6     #19 => 6
         self.ENA = 16
         self.ENB = 13
         self.dT = 0.08
@@ -83,7 +84,8 @@ class Motor(QRunnable):
     
     def getGyroValue(self):
         #print(self.dataBase.getSensorValue("gyro"))
-        return float(self.dataBase.getSensorValue("gyro").split("-")[0])
+        #return float(self.dataBase.getSensorValue("gyro").split("-")[0])
+        return float(self.gyro.getSensorValue().split("-")[0])
         
         #return self.messageRouter.route(senderName=self.node, receiverName=self.node, hardware="gyro", command=command, isReturn=False, channel="own")
         
@@ -148,6 +150,8 @@ class Motor(QRunnable):
                 break
             else:
                 currentSpeed, currentSpeedLeft, currentSpeedRight = self.calculateSpeedRun(i, currentSpeed, maxSpeed)
+                currentSpeedLeft = max(min(currentSpeedLeft,99),-99)
+                currentSpeedRight = max(min(currentSpeedRight,99),-99)
                 self.driveMotor(currentSpeedLeft, currentSpeedRight, self.dT, direction)
         self.stop()
         print("MOTOR STOP")

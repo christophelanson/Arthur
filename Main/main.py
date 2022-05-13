@@ -16,7 +16,7 @@ from Lidar import lidar
 from MiniLidar import MiniLIdar
 from Camera import Camera
 from Gyro import Gyro
-#from Radio import Radio
+from Radio import Radio
 from DataBase import DataBase
 
 
@@ -35,7 +35,7 @@ class Main(QMainWindow):
         self.hardwareHandler = HardwareHandler.HardwareHandler()
         # 1er paramètre : nom du hardware, 2 ème paramètre class du hardware, 3 ème paramètre paramètre d'init de la classe
 
-        #self.hardwareHandler.addHardware("radio", Radio.Radio)
+        self.hardwareHandler.addHardware("radio", Radio.Radio)
 
         self.hardwareHandler.addHardware("motor", Motor.Motor)
 
@@ -45,14 +45,16 @@ class Main(QMainWindow):
 
         #self.hardwareHandler.addHardware("miniLidar", MiniLIdar.MiniLidar)
 
-        self.hardwareHandler.addHardware("gyro", Gyro.Compass)
+        #self.hardwareHandler.addHardware("gyro", Gyro.Compass)
 
         #self.hardwareHandler.addHardware("ui", UI.UI, hardwareId)
 
         self.hardwareHandler.runThreadHardware()
         
-        layout = QVBoxLayout()
+        self.gyro = Gyro.Compass()
 
+        layout = QVBoxLayout()
+	
         b2 = QPushButton("Run Motor")
         b2.pressed.connect(self.runMotor)    
 
@@ -115,13 +117,13 @@ class Main(QMainWindow):
         self.mqtt = Mqtt.Mqtt(hardwareName="main", on_message=self.on_message, listChannel=self.listChannel)
 
         timer = QTimer(self)
-        timer.setInterval(1000)
+        timer.setInterval(100)
         timer.timeout.connect(self.updateBoard)
         timer.start()
         
 
     def updateBoard(self):
-        gyroValue = str(self.dataBase.getSensorValue("gyro")).split("-")
+        gyroValue = str(self.gyro.getSensorValue()).split("-")
         compass = gyroValue[0]
         picth = gyroValue[1]
         roll = gyroValue[2]
