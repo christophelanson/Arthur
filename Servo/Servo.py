@@ -50,7 +50,7 @@ class Servo:
 if __name__ == "__main__":
     servo = Servo()
     servo.getAllPulsesFromMemory()
-    angles=[80,110,100,100,50,80]
+    angles=[90,130,120,100,50,80]
     servo.servoControler(angles)
     #servo.getAllPulsesFromMemory()
     
