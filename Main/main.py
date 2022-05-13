@@ -26,8 +26,8 @@ class Main(QMainWindow):
         super(Main, self).__init__()
         
         with open('Main/idRobot.json') as f: #Permet de recuperer l'uinque ID associé a la carte
-            idRobot = json.load(f)
-        print(f"{Fore.GREEN}INFO (main) -> Initialising {idRobot}")
+            self.idRobot = json.load(f)
+        print(f"{Fore.GREEN}INFO (main) -> Initialising {self.idRobot}")
         listSensor = ["gyro", "miniLidar", "motor"] 
         self.dataBase = DataBase.DataBase("main")
         self.dataBase.initSensorTable(listSensor)
@@ -62,7 +62,7 @@ class Main(QMainWindow):
         b3.pressed.connect(self.stopMotor) 
 
         b4 = QPushButton("Camera")
-        b4.pressed.connect(self.photoCamera)    
+        b4.pressed.connect(self.photoCamera)   
 
         b8 = QPushButton("Radio send")
         b8.pressed.connect(self.sendRadio) 
@@ -72,6 +72,10 @@ class Main(QMainWindow):
 
         b9 = QPushButton("Run Lidar")
         b9.pressed.connect(self.runLidar) 
+
+        self.witchRobotLabel = QLabel()
+        self.witchRobotLabel.setText("Witch robot ?")
+        self.witchRobot = QLineEdit()
 
         self.speedInput = QLabel()
         self.speedInput.setText('Motor speed:')
@@ -151,7 +155,6 @@ class Main(QMainWindow):
     def sendRadio(self):
         self.mqtt.sendMessage(message="send/bonjour", receiver="radio", awnserNeeded=False)
 
-
     def on_message(self, client, data, message):
         self.mqtt.decodeMessage(message=message)
 
@@ -165,8 +168,11 @@ class Main(QMainWindow):
         payload = str(self.motorTime.text()) + "-" + str(self.motorDirection.text()) + "-0-" + str(self.motorSpeed.text()) + "-0"
         self.dataBase.updateSensorValue("motor", payload)
         payload = "run-" + str(self.motorTime.text()) + "-" + str(self.motorDirection.text()) + "-0-" + str(self.motorSpeed.text()) + "-0"
-        #print(payload)
-        self.mqtt.sendMessage(message="command/"+payload, receiver="motor")
+        if self.witchRobot.text == self.idRobot:
+            self.mqtt.sendMessage(message="command/"+payload, receiver="motor")
+        else:
+            payload = 'motor_'+ 'command/'+  payload
+            self.mqtt.sendMessage(message="send/"+payload, receiver="radio")
     
     def stopMotor(self):
         self.mqtt.sendMessage(message="command/stop", receiver="motor")

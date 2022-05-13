@@ -36,8 +36,8 @@ class Mqtt:
     
     def decodeMessage(self, message):
         self.lastMessage = str(message.payload.decode())
-        self.lastCommand = self.lastMessage.split("/")[0]
-        self.lastPayload = self.lastMessage.split("/")[1]
+        self.lastCommand = self.lastMessage.split("/",1)[0]
+        self.lastPayload = self.lastMessage.split("/",1)[1]
         self.lastTopic = message.topic
         self.lastSender = self.lastTopic.split("/")[0]
         #print(self.hardwareName, "recevied message from:", self.lastSender, ":")
