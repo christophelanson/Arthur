@@ -29,8 +29,20 @@ class RoboticArm(QRunnable):
         self.gyroValue = 0
         self.messageReceived = False
 
+        self.servo = Servo.Servo()
+
     def on_message(self, client, data, message):
         self.mqtt.decodeMessage(message=message)
+    
+        if self.mqtt.lastCommand == "command":
+            listPosition=self.mqtt.lastPayload.split("-")
+            position=[]
+            for value in listPosition:
+                position.append(float(value))
+            angles = self.calculateAngles(position)
+            print(angles)
+            angles = np.asarray(angles)
+            self.servo.servoControler(angles)
         
     @pyqtSlot()
     def run(self):

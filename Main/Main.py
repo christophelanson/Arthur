@@ -99,6 +99,9 @@ class Main(QMainWindow):
         self.miniLidarValue = QLabel()
         self.miniLidarValue.setText('Mini lidar value:')
 
+        self.roboticArmRun = QPushButton("Move robotic arm")
+        self.roboticArmRun.pressed.connect(self.runRoboticArm) 
+
         layout.addWidget(self.witchRobotLabel)
         layout.addWidget(self.witchRobot)
         layout.addWidget(b2)
@@ -106,6 +109,7 @@ class Main(QMainWindow):
         layout.addWidget(b7)
         layout.addWidget(b8)
         layout.addWidget(b9)
+        layout.addWidget(self.roboticArmRun)
         layout.addWidget(self.speedInput)
         layout.addWidget(self.motorSpeed)
         layout.addWidget(self.directionInput)
@@ -180,6 +184,16 @@ class Main(QMainWindow):
             payload = 'motor_'+ 'command/'+  payload
             self.mqtt.sendMessage(message="send/"+payload, receiver="radio")
     
+    def runRoboticArm(self):
+        payload = "60-200-100-0-80-40"
+        #self.dataBase.updateSensorValue("motor", payload)
+        #payload = "run-" + str(self.motorTime.text()) + "-" + str(self.motorDirection.text()) + "-0-" + str(self.motorSpeed.text()) + "-0"
+        if self.witchRobot.text() == str(self.idRobot["node"]):
+            self.mqtt.sendMessage(message="command/"+payload, receiver="roboticArm")
+        else:
+            payload = 'roboticArm_'+ 'command/'+  payload
+            self.mqtt.sendMessage(message="send/"+payload, receiver="radio")
+
     def stopMotor(self):
         self.mqtt.sendMessage(message="command/stop", receiver="motor")
     
