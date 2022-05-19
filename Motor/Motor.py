@@ -52,6 +52,7 @@ class Motor(QRunnable):
 
     def on_message(self, client, data, message):
         self.mqtt.decodeMessage(message=message)
+        print(self.mqtt.lastCommand,self.mqtt.lastPayload)
         if self.mqtt.lastCommand == "getState":
             message = "state/" + self.state
             self.mqtt.sendMessage(message=message, receiver=self.mqtt.lastSender)

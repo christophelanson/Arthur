@@ -10,14 +10,14 @@ from PyQt5.QtWidgets import *
 sys.path.append(".")
 from Mqtt import Mqtt
 from HardwareHandler import HardwareHandler #Permet de creer un hardware et d'executer son code en //, les hardwares fonctionnelles sont stockés dans un dictionnaire
-#from UI import UI  #Interface graphique
-from  Motor import Motor
-from Lidar import lidar
-from MiniLidar import MiniLIdar
+from Motor import Motor
+from Lidar import Lidar
+from MiniLidar import MiniLidar
 from Camera import Camera
 from Gyro import Gyro
 from Radio import Radio
 from DataBase import DataBase
+from RoboticArm import RoboticArm
 
 
 class Main(QMainWindow):
@@ -26,32 +26,36 @@ class Main(QMainWindow):
         super(Main, self).__init__()
         
         with open('Main/idRobot.json') as f: #Permet de recuperer l'uinque ID associé a la carte
-            idRobot = json.load(f)
-        print(f"{Fore.GREEN}INFO (main) -> Initialising {idRobot}")
+            self.idRobot = json.load(f)
+        print(f"{Fore.GREEN}INFO (main) -> Initialising {self.idRobot}")
         listSensor = ["gyro", "miniLidar", "motor"] 
         self.dataBase = DataBase.DataBase("main")
         self.dataBase.initSensorTable(listSensor)
         # créer chaque hardware
         self.hardwareHandler = HardwareHandler.HardwareHandler()
-        # 1er paramètre : nom du hardware, 2 ème paramètre class du hardware, 3 ème paramètre paramètre d'init de la classe
+        # 1er paramètre : nom du hardware, 2 ème paramètre class du hardware
 
         self.hardwareHandler.addHardware("radio", Radio.Radio)
 
         self.hardwareHandler.addHardware("motor", Motor.Motor)
 
+        self.hardwareHandler.addHardware("roboticArm", RoboticArm.RoboticArm)
+
         #self.hardwareHandler.addHardware("camera", Camera.Camera)
 
         #self.hardwareHandler.addHardware("lidar", lidar.Lidar)
 
-        #self.hardwareHandler.addHardware("miniLidar", MiniLIdar.MiniLidar)
+        self.hardwareHandler.addHardware("miniLidar", MiniLidar.MiniLidar)
 
         #self.hardwareHandler.addHardware("gyro", Gyro.Compass)
-
-        #self.hardwareHandler.addHardware("ui", UI.UI, hardwareId)
 
         self.hardwareHandler.runThreadHardware()
         
         self.gyro = Gyro.Compass()
+
+        #self.miniLidar = MiniLidar.MiniLidar()
+
+        self.lidar = Lidar.Lidar()
 
         layout = QVBoxLayout()
 	
@@ -62,7 +66,7 @@ class Main(QMainWindow):
         b3.pressed.connect(self.stopMotor) 
 
         b4 = QPushButton("Camera")
-        b4.pressed.connect(self.photoCamera)    
+        b4.pressed.connect(self.photoCamera)   
 
         b8 = QPushButton("Radio send")
         b8.pressed.connect(self.sendRadio) 
@@ -72,6 +76,10 @@ class Main(QMainWindow):
 
         b9 = QPushButton("Run Lidar")
         b9.pressed.connect(self.runLidar) 
+
+        self.witchRobotLabel = QLabel()
+        self.witchRobotLabel.setText("Witch robot ?")
+        self.witchRobot = QLineEdit()
 
         self.speedInput = QLabel()
         self.speedInput.setText('Motor speed:')
@@ -91,11 +99,17 @@ class Main(QMainWindow):
         self.miniLidarValue = QLabel()
         self.miniLidarValue.setText('Mini lidar value:')
 
+        self.roboticArmRun = QPushButton("Move robotic arm")
+        self.roboticArmRun.pressed.connect(self.runRoboticArm) 
+
+        layout.addWidget(self.witchRobotLabel)
+        layout.addWidget(self.witchRobot)
         layout.addWidget(b2)
         layout.addWidget(b3)
         layout.addWidget(b7)
         layout.addWidget(b8)
         layout.addWidget(b9)
+        layout.addWidget(self.roboticArmRun)
         layout.addWidget(self.speedInput)
         layout.addWidget(self.motorSpeed)
         layout.addWidget(self.directionInput)
@@ -117,18 +131,19 @@ class Main(QMainWindow):
         self.mqtt = Mqtt.Mqtt(hardwareName="main", on_message=self.on_message, listChannel=self.listChannel)
 
         timer = QTimer(self)
-        timer.setInterval(100)
+        timer.setInterval(500)
         timer.timeout.connect(self.updateBoard)
         timer.start()
         
 
     def updateBoard(self):
+        
         gyroValue = str(self.gyro.getSensorValue()).split("-")
         compass = gyroValue[0]
         picth = gyroValue[1]
         roll = gyroValue[2]
 
-        miniLidarValue = str(self.dataBase.getSensorValue("miniLidar"))
+        # miniLidarValue = str(round(self.miniLidar.getSensorValue()))
 
         motorValue = self.dataBase.getSensorValue("motor").split("-")
         motorSpeed = str(motorValue[3])
@@ -136,7 +151,7 @@ class Main(QMainWindow):
         motorTime = str(motorValue[0])
 
         self.gyroValue.setText(f"Gyro value : \n\tCompass: {compass} Pitch: {picth} Roll: {roll} ")
-        self.miniLidarValue.setText(f"MiniLidar value : \n\t Distance : {miniLidarValue}")
+        # self.miniLidarValue.setText(f"MiniLidar value : \n\t Distance : {miniLidarValue}")
         self.motorSpeed.setPlaceholderText(motorSpeed)
         self.motorDirection.setPlaceholderText(motorDirection)
         self.motorTime.setPlaceholderText(motorTime)
@@ -151,23 +166,34 @@ class Main(QMainWindow):
     def sendRadio(self):
         self.mqtt.sendMessage(message="send/bonjour", receiver="radio", awnserNeeded=False)
 
-
     def on_message(self, client, data, message):
         self.mqtt.decodeMessage(message=message)
 
         if self.mqtt.lastCommand == "state":
-            print("State,", self.mqtt.lastSender, "is", self.mqtt.lastPayload)
-
-    def on_message(self, client, data, message):
-        self.mqtt.decodeMessage(message=message)
+            #print("State,", self.mqtt.lastSender, "is", self.mqtt.lastPayload)
+            if self.mqtt.lastSender == "miniLidar":
+                self.miniLidarValue.setText(f"MiniLidar value : \n\t Distance : {round(float(self.mqtt.lastPayload))}")
         
     def runMotor(self):
         payload = str(self.motorTime.text()) + "-" + str(self.motorDirection.text()) + "-0-" + str(self.motorSpeed.text()) + "-0"
         self.dataBase.updateSensorValue("motor", payload)
         payload = "run-" + str(self.motorTime.text()) + "-" + str(self.motorDirection.text()) + "-0-" + str(self.motorSpeed.text()) + "-0"
-        #print(payload)
-        self.mqtt.sendMessage(message="command/"+payload, receiver="motor")
+        if self.witchRobot.text() == str(self.idRobot["node"]):
+            self.mqtt.sendMessage(message="command/"+payload, receiver="motor")
+        else:
+            payload = 'motor_'+ 'command/'+  payload
+            self.mqtt.sendMessage(message="send/"+payload, receiver="radio")
     
+    def runRoboticArm(self):
+        payload = "60-200-100-0-80-40"
+        #self.dataBase.updateSensorValue("motor", payload)
+        #payload = "run-" + str(self.motorTime.text()) + "-" + str(self.motorDirection.text()) + "-0-" + str(self.motorSpeed.text()) + "-0"
+        if self.witchRobot.text() == str(self.idRobot["node"]):
+            self.mqtt.sendMessage(message="command/"+payload, receiver="roboticArm")
+        else:
+            payload = 'roboticArm_'+ 'command/'+  payload
+            self.mqtt.sendMessage(message="send/"+payload, receiver="radio")
+
     def stopMotor(self):
         self.mqtt.sendMessage(message="command/stop", receiver="motor")
     

@@ -5,16 +5,53 @@ sys.path.insert(0, './Servo')
 import math
 import numpy as np
 import Servo
+from PyQt5.QtCore import *
+from PyQt5.QtGui import *
+from PyQt5.QtWidgets import *
+from Mqtt import Mqtt
 
-class RoboticArm:
+class RoboticArm(QRunnable):
     
     def __init__(self):
+
+        super(RoboticArm, self).__init__()
+        self.hardwareName = "roboticArm"
         # définition des paramètres du bras
         self.dSE = 130 # distance shoulder-elbow en mm
         self.dEW = 98 # distance elbow-wrist en mm
         self.dWMa = 28 # coude de la pince (perpendiculairement à la pince) en mm
         self.dWMd = 158 # longueur de la pince en mm
         self.dWM = math.sqrt(self.dWMa**2 + self.dWMd**2)
+
+        self.listChannel = ["all"]
+        self.mqtt = Mqtt.Mqtt(hardwareName=self.hardwareName, on_message=self.on_message, listChannel=self.listChannel)
+
+        self.gyroValue = 0
+        self.messageReceived = False
+
+        self.servo = Servo.Servo()
+
+    def on_message(self, client, data, message):
+        self.mqtt.decodeMessage(message=message)
+    
+        if self.mqtt.lastCommand == "command":
+            listPosition=self.mqtt.lastPayload.split("-")
+            position=[]
+            for value in listPosition:
+                position.append(float(value))
+            angles = self.calculateAngles(position)
+            print(angles)
+            angles = np.asarray(angles)
+            self.servo.servoControler(angles)
+        
+    @pyqtSlot()
+    def run(self):
+            print("Thread", self.hardwareName, "is running")
+    
+    @pyqtSlot()
+    def stop(self):
+        print(self.hardwareName, "closed")
+        exit(0)
 
     def calculateAngles(self,position):
         
