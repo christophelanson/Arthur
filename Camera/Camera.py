@@ -32,7 +32,7 @@ class Camera(QRunnable):
             print("Thread", self.hardwareName, "is running")
     
     def capture(self):
-        os.system("raspistill -vf -hf -o "+self.photoPath+str(self.numeroDeFichier))
+        os.system("raspistill -vf -q 100 -hf -o "+self.photoPath+str(self.numeroDeFichier))
     
 
 if __name__ == "__main__":

@@ -1,4 +1,4 @@
-#!/home/pi/Documents/QtVersion/RobotVignes/env/bin/python3
+#!/home/pi/Documents/Arthur/env/bin/python3
 
 # Copyright (c) 2019-2022, Emmanuel Blot <emmanuel.blot@free.fr>
 # All rights reserved.

@@ -1,4 +1,4 @@
-#!/home/pi/Documents/QtVersion/RobotVignes/env/bin/python3
+#!/home/pi/Documents/Arthur/env/bin/python3
 
 """Simple FTDI EEPROM configurator.
 """
