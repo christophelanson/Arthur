@@ -7,6 +7,10 @@ from colorama import Fore
 from PyQt5.QtCore import *
 from PyQt5.QtGui import *
 from PyQt5.QtWidgets import *
+
+import sys
+sys.path.insert(0, './Mqtt')
+
 from Mqtt import Mqtt
 
 
