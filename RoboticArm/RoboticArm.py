@@ -40,6 +40,8 @@ class RoboticArm(QRunnable):
             for value in listPosition:
                 position.append(float(value))
             angles = self.calculateAngles(position)
+            if not angles:
+                return
             print(angles)
             angles = np.asarray(angles)
             self.servo.servoControler(angles)
@@ -73,7 +75,7 @@ class RoboticArm(QRunnable):
         # condition dSM <= dSE + dEW + dWM : condition du bras tendu
         if dSM > self.dSE + self.dEW + self.dWM :
             print("Le bras est trop court pour atteindre l'objet")
-            exit(0)
+            return False
         # condition sur l'incidence
         # calcul des incidences min et max
         dSWMax = self.dSE + self.dEW
@@ -85,14 +87,14 @@ class RoboticArm(QRunnable):
         # condition
         if incidencePince < incidenceMin :
             print("L'angle d'incidence de la pince est trop faible")
-            exit(0)
+            return False
         if incidencePince > incidenceMax :
             print("L'angle d'incidence de la pince est trop élevé")
-            exit(0)
+            return False
         # condition sur la longeur de SW : SW <= SE + EW
         if dSW > dSWMax :
             print("Le bras est trop court pour atteindre l'objet")
-            exit(0)
+            return False
         
         # calcul des angles des servos S, E et W
         angleWSE = math.acos((self.dSE**2 + dSW**2 - self.dEW**2)/2/self.dSE/dSW)

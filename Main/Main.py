@@ -79,19 +79,27 @@ class Main(QMainWindow):
 
         self.robotNumberInput = QLabel()
         self.robotNumberInput.setText("Robot number ?")
-        self.robotNumber= QLineEdit()
+        self.robotNumber = QLineEdit("1")
 
         self.speedInput = QLabel()
         self.speedInput.setText('Motor speed:')
-        self.motorSpeed = QLineEdit()
+        self.motorSpeed = QLineEdit("50")
 
         self.timeInput = QLabel()
         self.timeInput.setText('Motor time:')
-        self.motorTime = QLineEdit()
+        self.motorTime = QLineEdit("3")
 
         self.directionInput = QLabel()
         self.directionInput.setText('Motor direction:')
-        self.motorDirection = QLineEdit()
+        self.motorDirection = QLineEdit("1")
+        
+        self.radioInput = QLabel()
+        self.radioInput.setText('Radio payload')
+        self.radioPayload = QLineEdit("send/motor_command/3-1-0-30-0")
+
+        self.roboticArmInput = QLabel()
+        self.roboticArmInput.setText('Robotic Arm payload')
+        self.roboticArmPayload = QLineEdit("20-200-150-0-80-40")
 
         self.gyroValue = QLabel()
         self.gyroValue.setText('Gyro value:')
@@ -105,11 +113,6 @@ class Main(QMainWindow):
         layout.addWidget(self.robotNumberInput)
         layout.addWidget(self.robotNumber)
         layout.addWidget(self.runMotorButton)
-        layout.addWidget(self.stopMotorButton)
-        layout.addWidget(self.closeCodeButton)
-        layout.addWidget(self.radioSendButton)
-        layout.addWidget(self.runLidarButton)
-        layout.addWidget(self.roboticArmRun)
         layout.addWidget(self.speedInput)
         layout.addWidget(self.motorSpeed)
         layout.addWidget(self.directionInput)
@@ -117,6 +120,19 @@ class Main(QMainWindow):
         layout.addWidget(self.timeInput)
         layout.addWidget(self.motorTime)
 
+        layout.addWidget(self.stopMotorButton)
+        layout.addWidget(self.closeCodeButton)
+        
+        layout.addWidget(self.radioSendButton)
+        layout.addWidget(self.radioInput)
+        layout.addWidget(self.radioPayload)
+        
+        layout.addWidget(self.runLidarButton)
+
+        layout.addWidget(self.roboticArmRun)
+        layout.addWidget(self.roboticArmInput)
+        layout.addWidget(self.roboticArmPayload)
+        
         layout.addWidget(self.gyroValue)
         layout.addWidget(self.miniLidarValue)
 
@@ -185,7 +201,7 @@ class Main(QMainWindow):
             self.mqtt.sendMessage(message="send/"+payload, receiver="radio")
     
     def runRoboticArm(self):
-        payload = "60-200-100-0-80-40"
+        payload = str(self.roboticArmPayload.text())
         #self.dataBase.updateSensorValue("motor", payload)
         #payload = "run-" + str(self.motorTime.text()) + "-" + str(self.motorDirection.text()) + "-0-" + str(self.motorSpeed.text()) + "-0"
         if self.robotNumber.text() == str(self.idRobot["node"]):
