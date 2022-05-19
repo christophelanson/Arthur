@@ -59,27 +59,27 @@ class Main(QMainWindow):
 
         layout = QVBoxLayout()
 	
-        b2 = QPushButton("Run Motor")
-        b2.pressed.connect(self.runMotor)    
+        self.runMotorButton = QPushButton("Run Motor")
+        self.runMotorButton.pressed.connect(self.runMotor)    
 
-        b3 = QPushButton("Stop Motor")
-        b3.pressed.connect(self.stopMotor) 
+        self.stopMotorButton = QPushButton("Stop Motor")
+        self.stopMotorButton.pressed.connect(self.stopMotor) 
 
-        b4 = QPushButton("Camera")
-        b4.pressed.connect(self.photoCamera)   
+        self.cameraButton = QPushButton("Camera")
+        self.cameraButton.pressed.connect(self.photoCamera)   
 
-        b8 = QPushButton("Radio send")
-        b8.pressed.connect(self.sendRadio) 
+        self.radioSendButton = QPushButton("Radio send")
+        self.radioSendButton.pressed.connect(self.sendRadio) 
 
-        b7 = QPushButton("Close Code")
-        b7.pressed.connect(self.closeEvent) 
+        self.closeCodeButton = QPushButton("Close Code")
+        self.closeCodeButton.pressed.connect(self.closeEvent) 
 
-        b9 = QPushButton("Run Lidar")
-        b9.pressed.connect(self.runLidar) 
+        self.runLidarButton = QPushButton("Run Lidar")
+        self.runLidarButton.pressed.connect(self.runLidar) 
 
-        self.witchRobotLabel = QLabel()
-        self.witchRobotLabel.setText("Witch robot ?")
-        self.witchRobot = QLineEdit()
+        self.robotNumberInput = QLabel()
+        self.robotNumberInput.setText("Robot number ?")
+        self.robotNumber= QLineEdit()
 
         self.speedInput = QLabel()
         self.speedInput.setText('Motor speed:')
@@ -102,13 +102,13 @@ class Main(QMainWindow):
         self.roboticArmRun = QPushButton("Move robotic arm")
         self.roboticArmRun.pressed.connect(self.runRoboticArm) 
 
-        layout.addWidget(self.witchRobotLabel)
-        layout.addWidget(self.witchRobot)
-        layout.addWidget(b2)
-        layout.addWidget(b3)
-        layout.addWidget(b7)
-        layout.addWidget(b8)
-        layout.addWidget(b9)
+        layout.addWidget(self.robotNumberInput)
+        layout.addWidget(self.robotNumber)
+        layout.addWidget(self.runMotorButton)
+        layout.addWidget(self.stopMotorButton)
+        layout.addWidget(self.closeCodeButton)
+        layout.addWidget(self.radioSendButton)
+        layout.addWidget(self.runLidarButton)
         layout.addWidget(self.roboticArmRun)
         layout.addWidget(self.speedInput)
         layout.addWidget(self.motorSpeed)
@@ -188,7 +188,7 @@ class Main(QMainWindow):
         payload = "60-200-100-0-80-40"
         #self.dataBase.updateSensorValue("motor", payload)
         #payload = "run-" + str(self.motorTime.text()) + "-" + str(self.motorDirection.text()) + "-0-" + str(self.motorSpeed.text()) + "-0"
-        if self.witchRobot.text() == str(self.idRobot["node"]):
+        if self.robotNumber.text() == str(self.idRobot["node"]):
             self.mqtt.sendMessage(message="command/"+payload, receiver="roboticArm")
         else:
             payload = 'roboticArm_'+ 'command/'+  payload
