@@ -29,18 +29,18 @@ class Mqtt:
             if hardware != self.hardwareName:
                 channel = hardware+"/"+self.hardwareName
                 self.client.subscribe(channel)
-                print(f"{Fore.GREEN}INFO (MQTT/{self.hardwareName}) -> self.hardwareName, subscribe to, {channel}")
+                print(f"{Fore.GREEN}INFO (MQTT/{self.hardwareName}) -> {self.hardwareName} subscribed to {channel}")
 
 
         self.client.loop_start()
     
     def decodeMessage(self, message):
         self.lastMessage = str(message.payload.decode())
-        self.lastCommand = self.lastMessage.split("/")[0]
-        self.lastPayload = self.lastMessage.split("/")[1]
+        self.lastCommand = self.lastMessage.split("/",1)[0]
+        self.lastPayload = self.lastMessage.split("/",1)[1]
         self.lastTopic = message.topic
         self.lastSender = self.lastTopic.split("/")[0]
-        #print(self.hardwareName, "recevied message from:", self.lastSender, ":")
+        #print(self.hardwareName, "received message from:", self.lastSender, ":")
         #print("\r message: ", self.lastMessage)
         self.waitingAwnser = False
     

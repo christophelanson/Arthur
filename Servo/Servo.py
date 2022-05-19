@@ -3,7 +3,6 @@ import Adafruit_PCA9685
 import RPi.GPIO as GPIO
 import numpy as np
 from colorama import Fore
-
     
 class Servo:
     
@@ -51,7 +50,7 @@ class Servo:
 if __name__ == "__main__":
     servo = Servo()
     servo.getAllPulsesFromMemory()
-    angles=[80,110,100,100,50,80]
+    angles=[70,100,100,100,90,80]
     servo.servoControler(angles)
     #servo.getAllPulsesFromMemory()
     

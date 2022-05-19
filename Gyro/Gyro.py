@@ -19,7 +19,7 @@ class Compass(QRunnable):
     def __init__(self):
         super(Compass, self).__init__()
         self.hardwareName = "gyro"
-        self.dataBase = DataBase.DataBase(id=self.hardwareName)
+        #self.dataBase = DataBase.DataBase(id=self.hardwareName)
         
         self.state = "ready"
         self.bus = smbus.SMBus(1) 
