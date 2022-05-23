@@ -6,6 +6,7 @@ from PyQt5.QtCore import *
 from PyQt5.QtGui import *
 from PyQt5.QtWidgets import *
 
+import time
 
 sys.path.append(".")
 from Mqtt import Mqtt
@@ -215,9 +216,14 @@ class Main(QMainWindow):
         self.mqtt.sendMessage(message="command/stop", receiver="motor")
     
     def photoCamera(self):
-        self.roboticArmPayload = QLineEdit("90,180,250,10,90,40")
-        self.runRoboticArm()
-        self.mqtt.sendMessage(message="command/capture", receiver="camera")
+        for angle in [0, 30, 60, 90, 120, 150, 180]:
+            print(angle)
+            self.roboticArmPayload = QLineEdit(f"{angle},180,250,10,90,40")
+            self.runRoboticArm()
+            self.mqtt.sendMessage(message=f"command/test{angle}", receiver="camera")
+            time.sleep(2)
+            self.roboticArmPayload = QLineEdit("90,180,250,10,90,40")
+            self.runRoboticArm()
         
 
 
