@@ -17,11 +17,12 @@ class RoboticArm(QRunnable):
         super(RoboticArm, self).__init__()
         self.hardwareName = "roboticArm"
         # définition des paramètres du bras
-        self.dSE = 130 # distance shoulder-elbow en mm
+        self.dSE = 108 # distance shoulder-elbow en mm
         self.dEW = 98 # distance elbow-wrist en mm
         self.dWMa = 28 # coude de la pince (perpendiculairement à la pince) en mm
         self.dWMd = 158 # longueur de la pince en mm
         self.dWM = math.sqrt(self.dWMa**2 + self.dWMd**2)
+        self.correctionAngles = [2,8,-11,-8,8,0] # corrections dues à l'imprécision des servos
 
         self.listChannel = ["all"]
         self.mqtt = Mqtt.Mqtt(hardwareName=self.hardwareName, on_message=self.on_message, listChannel=self.listChannel)
@@ -35,7 +36,7 @@ class RoboticArm(QRunnable):
         self.mqtt.decodeMessage(message=message)
     
         if self.mqtt.lastCommand == "command":
-            listPosition=self.mqtt.lastPayload.split("-")
+            listPosition=self.mqtt.lastPayload.split(",")
             position=[]
             for value in listPosition:
                 position.append(float(value))
@@ -102,9 +103,12 @@ class RoboticArm(QRunnable):
         angleEWS = math.pi - angleWSE - angleSEW
         
         #ces angles dépendent de du sens de rotation et de l'angle d'origine de chaque servo, constantes à ajouter le cas échéant selon chaque bras
-        angleS = math.pi - (anglexSW + angleWSE)
-        angleE = angleSEW - math.pi/2
-        angleW = math.pi + incidencePince + angleEWS - anglexSW 
+        # formule initiale angleS = math.pi - (anglexSW + angleWSE) >>> devient pi - angleS
+        angleS = math.pi - (anglexSW + angleWSE) # angle = 50° = contact avec la boite, angle = 180° = bras tendu vers l'avant
+        # formule initiale angleE = angleSEW - math.pi/2 >>> devient angleE
+        angleE = angleSEW # angle = 170° = reste du bras dans l'axe de SE
+        # formule initiale angleW = math.pi + incidencePince + angleEWS - anglexSW  >>> reste identique
+        angleW =  math.pi + incidencePince + angleEWS - anglexSW # angle = 0° = pince repliée vers le bas le long du bras, angle = 180° = dans l'axe de EW
         
         #conversion en degrés
         angleS = angleS * 180/math.pi
@@ -112,14 +116,16 @@ class RoboticArm(QRunnable):
         angleW = angleW * 180/math.pi
         
         angles = [directionBras, angleS, angleE, angleW, rotationPince, ouverturePince] # en degrés
+        angles = [angles[i] + self.correctionAngles[i] for i in range(5)] # application de la correction servos
         return angles
     
         
 if __name__ == "__main__":
     roboticArm = RoboticArm()
-    position = [60,200,100,-30,80,40] # position du point M à atteindre [directionBras(degrés), xM(mm), zM(mm), incidencePince(degrés), rotationPince(degrés), ouverturePince(degrés)]
+    position = [90,200,-100,-80,90,70] # position du point M à atteindre [directionBras(degrés), xM(mm), zM(mm), incidencePince(degrés), rotationPince(degrés), ouverturePince(degrés)]
     angles = roboticArm.calculateAngles(position)
     print(angles)
     angles = np.asarray(angles)
+    #angles = [92,76+8,165-15,42-8,98,88]
     servo = Servo.Servo()
     servo.servoControler(angles)

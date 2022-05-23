@@ -41,7 +41,7 @@ class Main(QMainWindow):
 
         self.hardwareHandler.addHardware("roboticArm", RoboticArm.RoboticArm)
 
-        #self.hardwareHandler.addHardware("camera", Camera.Camera)
+        self.hardwareHandler.addHardware("camera", Camera.Camera)
 
         #self.hardwareHandler.addHardware("lidar", lidar.Lidar)
 
@@ -99,7 +99,7 @@ class Main(QMainWindow):
 
         self.roboticArmInput = QLabel()
         self.roboticArmInput.setText('Robotic Arm payload')
-        self.roboticArmPayload = QLineEdit("20-200-150-0-80-40")
+        self.roboticArmPayload = QLineEdit("90,200,200,0,90,40")
 
         self.gyroValue = QLabel()
         self.gyroValue.setText('Gyro value:')
@@ -122,7 +122,8 @@ class Main(QMainWindow):
 
         layout.addWidget(self.stopMotorButton)
         layout.addWidget(self.closeCodeButton)
-        
+        layout.addWidget(self.cameraButton)
+
         layout.addWidget(self.radioSendButton)
         layout.addWidget(self.radioInput)
         layout.addWidget(self.radioPayload)
@@ -214,7 +215,10 @@ class Main(QMainWindow):
         self.mqtt.sendMessage(message="command/stop", receiver="motor")
     
     def photoCamera(self):
+        self.roboticArmPayload = QLineEdit("90,180,250,10,90,40")
+        self.runRoboticArm()
         self.mqtt.sendMessage(message="command/capture", receiver="camera")
+        
 
 
 if __name__ == "__main__":
