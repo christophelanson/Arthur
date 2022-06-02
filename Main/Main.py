@@ -98,6 +98,9 @@ class Main(QMainWindow):
         self.radioInput.setText('Radio payload')
         self.radioPayload = QLineEdit("send/motor_command/3-1-0-30-0")
 
+        self.roboticArmRun = QPushButton("Move robotic arm")
+        self.roboticArmRun.pressed.connect(self.runRoboticArm) 
+
         self.roboticArmInput = QLabel()
         self.roboticArmInput.setText('Robotic Arm payload')
         self.roboticArmPayload = QLineEdit("90,200,200,0,90,40")
@@ -107,9 +110,6 @@ class Main(QMainWindow):
 
         self.miniLidarValue = QLabel()
         self.miniLidarValue.setText('Mini lidar value:')
-
-        self.roboticArmRun = QPushButton("Move robotic arm")
-        self.roboticArmRun.pressed.connect(self.runRoboticArm) 
 
         layout.addWidget(self.robotNumberInput)
         layout.addWidget(self.robotNumber)
@@ -175,7 +175,17 @@ class Main(QMainWindow):
         self.motorTime.setPlaceholderText(motorTime)
 
     def runLidar(self):
+        print("Running Lidar")
+        print("Folding Arm")
+        payload="90,320,-50,-30,90,40"
+        self.mqtt.sendMessage(message="command/"+payload, receiver="roboticArm")
+        time.sleep(1)
+        print("Collecting Lidar data")
         self.mqtt.sendMessage(message="command/scan", receiver="lidar")
+        time.sleep(5)
+        print("Unfolding Arm")
+        payload="90,180,250,10,90,40"
+        self.mqtt.sendMessage(message="command/"+payload, receiver="roboticArm")
 
     def closeEvent(self):
         app.quit()
@@ -218,13 +228,14 @@ class Main(QMainWindow):
     def photoCamera(self):
         for angle in [0, 30, 60, 90, 120, 150, 180]:
             print(angle)
-            self.roboticArmPayload = QLineEdit(f"{angle},180,250,10,90,40")
-            self.runRoboticArm()
+            payload=f"{angle},200,200,0,90,0"
+            self.mqtt.sendMessage(message="command/"+payload, receiver="roboticArm")
             self.mqtt.sendMessage(message=f"command/test{angle}", receiver="camera")
             time.sleep(2)
-            self.roboticArmPayload = QLineEdit("90,180,250,10,90,40")
-            self.runRoboticArm()
+            payload="90,180,250,10,90,40"
+            self.mqtt.sendMessage(message="command/"+payload, receiver="roboticArm")
         
+    
 
 
 if __name__ == "__main__":

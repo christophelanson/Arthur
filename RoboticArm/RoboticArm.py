@@ -116,7 +116,7 @@ class RoboticArm(QRunnable):
         angleW = angleW * 180/math.pi
         
         angles = [directionBras, angleS, angleE, angleW, rotationPince, ouverturePince] # en degrés
-        angles = [angles[i] + self.correctionAngles[i] for i in range(5)] # application de la correction servos
+        angles = [angles[i] + self.correctionAngles[i] for i in range(6)] # application de la correction servos
         return angles
     
         
