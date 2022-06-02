@@ -11,7 +11,7 @@ from PyQt5.QtWidgets import *
 import sys
 sys.path.insert(0, './Mqtt')
 
-#from Mqtt import Mqtt
+from Mqtt import Mqtt
 
 
 GPIO.setmode(GPIO.BCM)
@@ -36,7 +36,7 @@ class Radio(QRunnable):
         self.state = "listening"
         self.isWriting = False
         self.listChannel = ["all"]
-  #      self.mqtt = Mqtt.Mqtt(hardwareName=self.hardwareName, on_message=self.on_message, listChannel=self.listChannel)
+        self.mqtt = Mqtt.Mqtt(hardwareName=self.hardwareName, on_message=self.on_message, listChannel=self.listChannel)
 
     def on_message(self, client, data, message):
         self.mqtt.decodeMessage(message=message)
