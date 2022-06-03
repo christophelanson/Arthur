@@ -6,8 +6,8 @@ from sklearn.neighbors import NearestNeighbors
 
 
 file_nb = 0
-path_to_output_lidar_file=f'data/outputLidarFile{file_nb}.csv'
-path_to_output_objects_file=f'data/outputObjectsFile{file_nb}.csv'
+path_to_output_lidar_file= f'Log/outputLidarFile{file_nb}.csv'
+path_to_output_objects_file= f'Log/outputObjectsFile{file_nb}.csv'
 
 verbose = 2
 # dictionnary of hyper and other parameters
@@ -383,7 +383,7 @@ print("best angle ",best_angle, "distance to lidar ", distance_to_lidar)
 # rows on each side of 0, vines from 0 to nb_vines x expected_distance
 # all points are graded default_grade=0.5 by default
 # vine_map structure : obj_nb, x, y, size, grade
-def create_new_vine_map(name=f'data/vine_map_AH222.csv',
+def create_new_vine_map(name=f'Log/vine_map_AH222.csv',
                         expected_width=2000,
                         expected_distance=800,
                         nb_rows=4,
@@ -620,8 +620,8 @@ for file_nb in range(42):
 
     # load object csv file and process landmark calculations
 #    file_nb = 7
-    path_to_output_objects_file=f'data/outputObjectsFile{file_nb}.csv'
-    landmarks, best_angle, distance_to_lidar = process_lidar_file_to_landmarks(f'data/outputObjectsFile{file_nb}.csv',
+    path_to_output_objects_file=f'Log/outputObjectsFile{file_nb}.csv'
+    landmarks, best_angle, distance_to_lidar = process_lidar_file_to_landmarks(f'Log/outputObjectsFile{file_nb}.csv',
                                                                                lidar_kwargs,
                                                                                verbose=1)
 
@@ -634,7 +634,7 @@ for file_nb in range(42):
     expected_width = lidar_kwargs['expected_width']
     # vine_map file name and path, update flag
     plot_name = 'AH222'
-    path_to_vine_map_file = f'data/vine_map_{plot_name}.csv'
+    path_to_vine_map_file = f'Log/vine_map_{plot_name}.csv'
     if file_nb == 0:
         create_new_map = True
     else:
@@ -661,7 +661,7 @@ print("showing map")
 # plot full vine_map
 plt.figure(figsize=(15,15))
 plot_name = 'AH222'
-path_to_vine_map_file = f'data/vine_map_{plot_name}.csv'
+path_to_vine_map_file = f'Log/vine_map_{plot_name}.csv'
 vine_map = get_vine_map(path_to_vine_map_file, create_new=False, verbose=1)
 vine_map = np.asarray(vine_map)
 sns.scatterplot(x=vine_map[:,1],y=vine_map[:,2],size=vine_map[:,4], hue=vine_map[:,4])

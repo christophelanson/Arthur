@@ -7,6 +7,7 @@ from PyQt5.QtGui import *
 from PyQt5.QtWidgets import *
 
 import time
+import numpy as np
 
 sys.path.append(".")
 from Mqtt import Mqtt
@@ -69,6 +70,9 @@ class Main(QMainWindow):
         self.cameraButton = QPushButton("Camera")
         self.cameraButton.pressed.connect(self.photoCamera)   
 
+        self.objectsCameraButton = QPushButton("Lidar Objects Camera Shoot")
+        self.objectsCameraButton.pressed.connect(self.objectsCamera)
+
         self.radioSendButton = QPushButton("Radio send")
         self.radioSendButton.pressed.connect(self.sendRadio) 
 
@@ -124,6 +128,7 @@ class Main(QMainWindow):
         layout.addWidget(self.stopMotorButton)
         layout.addWidget(self.closeCodeButton)
         layout.addWidget(self.cameraButton)
+        layout.addWidget(self.objectsCameraButton)
 
         layout.addWidget(self.radioSendButton)
         layout.addWidget(self.radioInput)
@@ -225,17 +230,37 @@ class Main(QMainWindow):
     def stopMotor(self):
         self.mqtt.sendMessage(message="command/stop", receiver="motor")
     
-    def photoCamera(self):
-        for angle in [0, 30, 60, 90, 120, 150, 180]:
-            print(angle)
+    def photoCamera(self,pictureName='pictureName'):
+        self.mqtt.sendMessage(message=f"command/{pictureName}", receiver="camera")
+        
+    def objectsCamera(self,sequenceName='sequence'):
+
+# ADD CORRECTION to angle and distance to take into account the fact that Lidar and Robotic Arm are distant
+
+        # Lidar angle correction (LidarAC)
+        # NB a corrected angle will point according to RoboticArm servo angles
+        LidarAC = 280
+        #load outputObjectsFile.csv
+        path_to_output_objects_file = 'Log/outputObjectsFile.csv'
+        lidar_objects = np.loadtxt(path_to_output_objects_file, delimiter=",", dtype=float)
+        filtered_lidar_objects = []
+        for object_nb in range(len(lidar_objects)):
+            angle = (lidar_objects[object_nb][1]+lidar_objects[object_nb][3])/2
+            distance = (lidar_objects[object_nb][2]+lidar_objects[object_nb][4])/2
+            # keep only objects closer than 2000 mm and angle in [0,180] - RobotArm-wise
+            angle = LidarAC - angle
+            if distance <= 1000 and angle > 0 and angle < 180:
+                filtered_lidar_objects.append([angle, distance])
+        filtered_lidar_objects = np.asarray(filtered_lidar_objects)
+        for angle, distance in filtered_lidar_objects:
+            print(round(angle), distance)
             payload=f"{angle},200,200,0,90,0"
             self.mqtt.sendMessage(message="command/"+payload, receiver="roboticArm")
-            self.mqtt.sendMessage(message=f"command/test{angle}", receiver="camera")
+            pictureName="LidarSequence"+str(round(angle))
+            self.mqtt.sendMessage(message=f"command/{pictureName}", receiver="camera")
             time.sleep(2)
-            payload="90,180,250,10,90,40"
-            self.mqtt.sendMessage(message="command/"+payload, receiver="roboticArm")
-        
-    
+        payload="90,180,250,10,90,40"
+        self.mqtt.sendMessage(message="command/"+payload, receiver="roboticArm")
 
 
 if __name__ == "__main__":

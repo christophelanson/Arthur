@@ -230,7 +230,8 @@ class Lidar(QRunnable):
         self.numeroDeFichier = sequenceNumber
 
         # crée le fichier lidar2.csv des données brutes (taille 7.200 x 2)
-        nomDuFichier = "Log/outputLidarFile" + str(self.numeroDeFichier) + ".csv"
+        # current file (fichier courant)
+        nomDuFichier = "Log/outputLidarFile.csv"
         np.savetxt(nomDuFichier, self.outputDataList, fmt= '%.2f', delimiter=",")
 
         # crée le fichier des objets LidarObjects.csv
@@ -240,7 +241,7 @@ class Lidar(QRunnable):
         np.savetxt(nomDuFichier, self.listObjets, fmt= '%.2f', delimiter=",")
         # fichier à enregistrer avec le numéro de la séquence
         nomDuFichier = "Log/outputObjectsFile" + str(self.numeroDeFichier) + ".csv"     
-        np.savetxt(nomDuFichier, self.listObjets, fmt= '%.2f', delimiter=",") # log
+#        np.savetxt(nomDuFichier, self.listObjets, fmt= '%.2f', delimiter=",") # log
         print(f"{Fore.GREEN}INFO ({self.hardwareName}) -> Data collect completed and files created")
         
     def scan(self):

@@ -27,3 +27,7 @@ smbus==1.1.post2
 spidev==3.5
 sysv-ipc==1.1.0
 typing_extensions==4.1.1
+
+matplotlib==3.5.2
+seaborn==0.11.2
+scikit-learn==1.1.1
