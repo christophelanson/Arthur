@@ -109,6 +109,13 @@ class Main(QMainWindow):
         self.roboticArmInput.setText('Robotic Arm payload')
         self.roboticArmPayload = QLineEdit("90,200,200,0,90,40")
 
+        self.fullSequenceButton = QPushButton("Run full sequences")
+        self.fullSequenceButton.pressed.connect(self.fullSequence)
+
+        self.fullSequenceLabel = QLabel()
+        self.fullSequenceLabel.setText("Nb of motor/lidar/camera sequences")
+        self.nbOfSequences = QLineEdit("1")
+
         self.gyroValue = QLabel()
         self.gyroValue.setText('Gyro value:')
 
@@ -139,6 +146,10 @@ class Main(QMainWindow):
         layout.addWidget(self.roboticArmRun)
         layout.addWidget(self.roboticArmInput)
         layout.addWidget(self.roboticArmPayload)
+
+        layout.addWidget(self.fullSequenceLabel)
+        layout.addWidget(self.nbOfSequences)
+        layout.addWidget(self.fullSequenceButton)
         
         layout.addWidget(self.gyroValue)
         layout.addWidget(self.miniLidarValue)
@@ -211,7 +222,7 @@ class Main(QMainWindow):
         payload = str(self.motorTime.text()) + "-" + str(self.motorDirection.text()) + "-0-" + str(self.motorSpeed.text()) + "-0"
         self.dataBase.updateSensorValue("motor", payload)
         payload = "run-" + str(self.motorTime.text()) + "-" + str(self.motorDirection.text()) + "-0-" + str(self.motorSpeed.text()) + "-0"
-        if self.witchRobot.text() == str(self.idRobot["node"]):
+        if self.robotNumber.text() == str(self.idRobot["node"]):
             self.mqtt.sendMessage(message="command/"+payload, receiver="motor")
         else:
             payload = 'motor_'+ 'command/'+  payload
@@ -249,18 +260,34 @@ class Main(QMainWindow):
             distance = (lidar_objects[object_nb][2]+lidar_objects[object_nb][4])/2
             # keep only objects closer than 2000 mm and angle in [0,180] - RobotArm-wise
             angle = LidarAC - angle
-            if distance <= 1000 and angle > 0 and angle < 180:
+            if distance <= 2000 and angle > 0 and angle < 180:
                 filtered_lidar_objects.append([angle, distance])
         filtered_lidar_objects = np.asarray(filtered_lidar_objects)
         for angle, distance in filtered_lidar_objects:
             print(round(angle), distance)
             payload=f"{angle},200,200,0,90,0"
             self.mqtt.sendMessage(message="command/"+payload, receiver="roboticArm")
-            pictureName="LidarSequence"+str(round(angle))
+            pictureName=sequenceName+"_"+str(round(angle))
             self.mqtt.sendMessage(message=f"command/{pictureName}", receiver="camera")
             time.sleep(2)
         payload="90,180,250,10,90,40"
         self.mqtt.sendMessage(message="command/"+payload, receiver="roboticArm")
+
+    def fullSequence(self):
+        nbOfSequences = self.nbOfSequences.text() 
+        for sequenceNumber in range(int(nbOfSequences)):
+            # motor
+            self.runMotor()
+            time.sleep(3)
+            # lidar
+            self.runLidar()
+            time.sleep(1)
+            # save current file in log
+            path_to_output_objects_file = 'Log/outputObjectsFile.csv'
+            lidar_objects = np.loadtxt(path_to_output_objects_file, delimiter=",", dtype=float)
+            np.savetxt(f'Log/outputObjectsFile{sequenceNumber}.csv', lidar_objects, fmt= '%.2f', delimiter=",")
+            # pictures
+            self.objectsCamera(sequenceName = f'Sequence{sequenceNumber}')
 
 
 if __name__ == "__main__":
