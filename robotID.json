@@ -1,1 +1,105 @@
-{"ID": {"name": "Arthur", "hardwareList": ["motor", "radio", "compass", "lidar", "miniLidar", "roboticArm", "camera"], "info": ""}, "dimensions": {"width": 320, "length": 440, "heigth": 150, "origin": [160, 220, 150], "wheelDiameter": 125, "info": "mm , including wheels, heigth to robot table"}, "powerSupply": {"batteryType": "lead", "numberOfBatteries": 1, "batteryVoltage": 6, "batteryPower": 10, "cardType": "strompi 3", "info": "Voltage in V, Power in Ah"}, "motors": {"numberOfMotors": 6, "motorTorn": 8.8, "info": "Torn in kg.cm"}, "radio": {"info": ""}, "lidar": {"type": "YLidarX2", "position": [0, 170, 170], "attitude": [0, 190, 0], "lidar_kwargs": {"bin_size": 10, "expected_width": 200, "expected_distance": 80, "suppress_obj_distance": 10000, "max_object_size": 150, "min_object_size": 10, "min_object_distance": 200, "max_object_distance": 7000, "max_nb_obj": 3, "nbr_range": 200}, "info": "lidar north is the direction (measured clockwise from robot north) of a 0 measured lidar angle"}, "roboticArm": {"type": "LynxMotion", "SPosition": [0, 120, 60], "dSE": 108, "dEW": 98, "dWMa": 28, "dWMb": 158, "correctionAngles": [2, 8, -11, -8, 8, 0], "info": "mm, S shoulder, E elbow, W wrist, Ma clamp heigth, Mb clamp length"}, "camera": {"info": "position on robotic arm wrist"}, "compass": {"type": "CMPS14", "attitude": [0, 85, 0], "info": "attitude = pitch, roll, yaw. Use formula : robot angle = compass angle + pitch/roll/yaw"}, "miniLidar": {"info": "position on robotic arm wrist"}}
+{
+    "ID": {
+        "name": "Arthur",
+        "hardwareList": [
+            "motor",
+            "radio",
+            "compass",
+            "lidar",
+            "miniLidar",
+            "roboticArm",
+            "camera"
+        ],
+        "info": ""
+    },
+    "dimensions": {
+        "width": 320,
+        "length": 440,
+        "heigth": 150,
+        "origin": [
+            160,
+            220,
+            150
+        ],
+        "wheelDiameter": 125,
+        "info": "mm , including wheels, heigth to robot table"
+    },
+    "powerSupply": {
+        "batteryType": "lead",
+        "numberOfBatteries": 1,
+        "batteryVoltage": 6,
+        "batteryPower": 10,
+        "cardType": "strompi 3",
+        "info": "Voltage in V, Power in Ah"
+    },
+    "motors": {
+        "numberOfMotors": 6,
+        "motorTorn": 8.8,
+        "info": "Torn in kg.cm"
+    },
+    "radio": {
+        "info": ""
+    },
+    "lidar": {
+        "type": "YLidarX2",
+        "position": [
+            0,
+            170,
+            170
+        ],
+        "attitude": [
+            0,
+            190,
+            0
+        ],
+        "lidar_kwargs": {
+            "bin_size": 10,
+            "expected_width": 200,
+            "expected_distance": 80,
+            "suppress_obj_distance": 10000,
+            "max_object_size": 150,
+            "min_object_size": 10,
+            "min_object_distance": 200,
+            "max_object_distance": 7000,
+            "max_nb_obj": 3,
+            "nbr_range": 200
+        },
+        "info": "lidar north is the direction (measured clockwise from robot north) of a 0 measured lidar angle"
+    },
+    "roboticArm": {
+        "type": "LynxMotion",
+        "SPosition": [
+            0,
+            120,
+            60
+        ],
+        "dSE": 108,
+        "dEW": 98,
+        "dWMa": 28,
+        "dWMd": 158,
+        "correctionAngles": [
+            2,
+            8,
+            -11,
+            -8,
+            8,
+            0
+        ],
+        "info": "mm, S shoulder, E elbow, W wrist, Ma clamp heigth, Mb clamp length"
+    },
+    "camera": {
+        "info": "position on robotic arm wrist"
+    },
+    "compass": {
+        "type": "CMPS14",
+        "attitude": [
+            0,
+            85,
+            0
+        ],
+        "info": "attitude = pitch, roll, yaw. Use formula : robot angle = compass angle + pitch/roll/yaw"
+    },
+    "miniLidar": {
+        "info": "position on robotic arm wrist"
+    }
+}

@@ -2,6 +2,7 @@ import sys
 import os
 sys.path.insert(0, './Servo')
 
+import json
 import math
 import numpy as np
 import Servo
@@ -17,12 +18,15 @@ class RoboticArm(QRunnable):
         super(RoboticArm, self).__init__()
         self.hardwareName = "roboticArm"
         # définition des paramètres du bras
-        self.dSE = 108 # distance shoulder-elbow en mm
-        self.dEW = 98 # distance elbow-wrist en mm
-        self.dWMa = 28 # coude de la pince (perpendiculairement à la pince) en mm
-        self.dWMd = 158 # longueur de la pince en mm
+        # loading robotID.json
+        with open('robotID.json') as jsonFile:
+            data = json.load(jsonFile)
+        self.dSE = data['roboticArm']['dSE'] # distance shoulder-elbow en mm
+        self.dEW = data['roboticArm']['dEW'] # distance elbow-wrist en mm
+        self.dWMa = data['roboticArm']['dWMa'] # coude de la pince (perpendiculairement à la pince) en mm
+        self.dWMd = data['roboticArm']['dWMd'] # longueur de la pince en mm
         self.dWM = math.sqrt(self.dWMa**2 + self.dWMd**2)
-        self.correctionAngles = [2,8,-11,-8,8,0] # corrections dues à l'imprécision des servos
+        self.correctionAngles = data['roboticArm']['correctionAngles'] # corrections dues à l'imprécision des servos
 
         self.listChannel = ["all"]
         self.mqtt = Mqtt.Mqtt(hardwareName=self.hardwareName, on_message=self.on_message, listChannel=self.listChannel)

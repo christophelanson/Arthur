@@ -1,4 +1,5 @@
 import numpy as np
+import json
 import matplotlib.pyplot as plt
 import seaborn as sns
 from math import cos, sin, sqrt, atan
@@ -12,7 +13,8 @@ plot_name = 'AH422' # numéro de cadastre de la parcelle
 
 verbose = 2
 # dictionnary of hyper and other parameters
-lidar_kwargs = {
+# structure detailed below
+"""lidar_kwargs = {
     # hyper parameters : vine grid description and calculation precision
     'bin_size' : 10, # cm, represents the precision for object grouping
     'expected_width' : 200, # cm, the space between two rows of vines
@@ -27,7 +29,11 @@ lidar_kwargs = {
     # the following parameters are used to filter objects by density
     'max_nb_obj' : 3, #maximum allowed nb of objects (including self)
     'nbr_range' : 200 # within this distance (mm)
-}
+}"""
+# loading from robotID.json
+with open('robotID.json') as jsonFile:
+    data = json.load(jsonFile)
+lidar_kwargs = data['lidar']['lidar_kwargs']
 
 def process_lidar_file_to_landmarks(path_to_output_objects_file, kwargs, verbose=0):
 
@@ -611,63 +617,64 @@ def position_and_map_update(expected_X,
 # HERE IS THE CODE
 #
 
-X_position = 0
-Y_position = 0
+if __name__ == "__main__":
+    X_position = 0
+    Y_position = 0
 
-for file_nb in range(10):
+    for file_nb in range(10):
 
-    print()
-    print(f'processing file nb {file_nb}')
+        print()
+        print(f'processing file nb {file_nb}')
 
-    # load object csv file and process landmark calculations
-#    file_nb = 7
-    path_to_output_objects_file=f'Log/outputObjectsFile{file_nb}.csv'
-    landmarks, best_angle, distance_to_lidar = process_lidar_file_to_landmarks(f'Log/outputObjectsFile{file_nb}.csv',
-                                                                               lidar_kwargs,
-                                                                               verbose=1)
+        # load object csv file and process landmark calculations
+    #    file_nb = 7
+        path_to_output_objects_file=f'Log/outputObjectsFile{file_nb}.csv'
+        landmarks, best_angle, distance_to_lidar = process_lidar_file_to_landmarks(f'Log/outputObjectsFile{file_nb}.csv',
+                                                                                lidar_kwargs,
+                                                                                verbose=1)
 
-    # expected lidar position (estimation)
-    expected_X = 0 #X_position # (mm)
-    expected_Y = Y_position + 900 # (mm)
-    # other parmeters
-    update_map = True # update vine_map file after process
-    bin_size = lidar_kwargs['bin_size']
-    expected_width = lidar_kwargs['expected_width']
-    # vine_map file name and path, update flag
-    # plot_name = 'AH222' (this line has been moved up)
+        # expected lidar position (estimation)
+        expected_X = 0 #X_position # (mm)
+        expected_Y = Y_position + 900 # (mm)
+        # other parmeters
+        update_map = True # update vine_map file after process
+        bin_size = lidar_kwargs['bin_size']
+        expected_width = lidar_kwargs['expected_width']
+        # vine_map file name and path, update flag
+        # plot_name = 'AH222' (this line has been moved up)
+        path_to_vine_map_file = f'Log/vine_map_{plot_name}.csv'
+        if file_nb == 0:
+            create_new_map = True
+        else:
+            create_new_map = False
+
+        # calculation true position and update vine_map
+        X_position, Y_position, direction = position_and_map_update(expected_X,
+                                    expected_Y,
+                                    path_to_vine_map_file,
+                                    create_new_map=create_new_map,
+                                    update_map=update_map,
+                                    landmarks=landmarks,
+                                    best_angle=best_angle,
+                                    distance_to_lidar=distance_to_lidar,
+                                    bin_size=bin_size,
+                                    expected_width=expected_width,
+                                    crop_distance=10000,
+                                    verbose=1)
+
+        print(f'file_nb {file_nb} done, position= {X_position}, {Y_position}, direction = {direction}')
+
+    print("")
+    print("showing map")
+    # plot full vine_map
+    plt.figure(figsize=(15,15))
+    # plot_name = 'AH222'
     path_to_vine_map_file = f'Log/vine_map_{plot_name}.csv'
-    if file_nb == 0:
-        create_new_map = True
-    else:
-        create_new_map = False
-
-    # calculation true position and update vine_map
-    X_position, Y_position, direction = position_and_map_update(expected_X,
-                                expected_Y,
-                                path_to_vine_map_file,
-                                create_new_map=create_new_map,
-                                update_map=update_map,
-                                landmarks=landmarks,
-                                best_angle=best_angle,
-                                distance_to_lidar=distance_to_lidar,
-                                bin_size=bin_size,
-                                expected_width=expected_width,
-                                crop_distance=10000,
-                                verbose=1)
-
-    print(f'file_nb {file_nb} done, position= {X_position}, {Y_position}, direction = {direction}')
-
-print("")
-print("showing map")
-# plot full vine_map
-plt.figure(figsize=(15,15))
-# plot_name = 'AH222'
-path_to_vine_map_file = f'Log/vine_map_{plot_name}.csv'
-vine_map = get_vine_map(path_to_vine_map_file, create_new=False, verbose=1)
-vine_map = np.asarray(vine_map)
-sns.scatterplot(x=vine_map[:,1],y=vine_map[:,2],size=vine_map[:,4], hue=vine_map[:,4])
-plt.plot(X_position, Y_position, 'ro')
-plt.xlim(min(vine_map[:,1])-200,max(vine_map[:,1])+200)
-plt.ylim(min(vine_map[:,2])-200,max(vine_map[:,2])+200)
-plt.grid()
-plt.show();
+    vine_map = get_vine_map(path_to_vine_map_file, create_new=False, verbose=1)
+    vine_map = np.asarray(vine_map)
+    sns.scatterplot(x=vine_map[:,1],y=vine_map[:,2],size=vine_map[:,4], hue=vine_map[:,4])
+    plt.plot(X_position, Y_position, 'ro')
+    plt.xlim(min(vine_map[:,1])-200,max(vine_map[:,1])+200)
+    plt.ylim(min(vine_map[:,2])-200,max(vine_map[:,2])+200)
+    plt.grid()
+    plt.show();
