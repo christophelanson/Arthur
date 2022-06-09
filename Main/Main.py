@@ -265,7 +265,7 @@ class Main(QMainWindow):
         filtered_lidar_objects = np.asarray(filtered_lidar_objects)
         for angle, distance in filtered_lidar_objects:
             print(round(angle), distance)
-            payload=f"{angle},200,200,0,90,0"
+            payload=f"{angle},200,250,20,90,0"
             self.mqtt.sendMessage(message="command/"+payload, receiver="roboticArm")
             pictureName=sequenceName+"_"+str(round(angle))
             self.mqtt.sendMessage(message=f"command/{pictureName}", receiver="camera")

@@ -8,6 +8,7 @@ from sklearn.neighbors import NearestNeighbors
 file_nb = 0
 path_to_output_lidar_file= f'Log/outputLidarFile{file_nb}.csv'
 path_to_output_objects_file= f'Log/outputObjectsFile{file_nb}.csv'
+plot_name = 'AH422' # numéro de cadastre de la parcelle
 
 verbose = 2
 # dictionnary of hyper and other parameters
@@ -383,7 +384,7 @@ print("best angle ",best_angle, "distance to lidar ", distance_to_lidar)
 # rows on each side of 0, vines from 0 to nb_vines x expected_distance
 # all points are graded default_grade=0.5 by default
 # vine_map structure : obj_nb, x, y, size, grade
-def create_new_vine_map(name=f'Log/vine_map_AH222.csv',
+def create_new_vine_map(name=f'Log/vine_map_{plot_name}.csv',
                         expected_width=2000,
                         expected_distance=800,
                         nb_rows=4,
@@ -485,8 +486,8 @@ def position_and_map_update(expected_X,
     sum_distances = [0] # sum of distances to nearest vine_map object
     best_cor_Y = 0
     best_cor_X = 0
-    for Y_index_nb in range(160): # loop through -80 to +80 cm for Y (this assumes expected_Y truly falls within this range)
-        cor_Y = (Y_index_nb-80)*10
+    for Y_index_nb in range(100): # loop through -50 to +50 cm for Y (this assumes expected_Y truly falls within this range)
+        cor_Y = (Y_index_nb-50)*10
         for X_index_nb in range(10): # loop within bin_size as grid_align has centered X
             cor_X = (X_index_nb-5)*10
             temp_landmarks = [[row[0]+cor_X, row[1]+cor_Y] for row in landmarks_real]
@@ -611,9 +612,9 @@ def position_and_map_update(expected_X,
 #
 
 X_position = 0
-Y_position = -000
+Y_position = 0
 
-for file_nb in range(42):
+for file_nb in range(10):
 
     print()
     print(f'processing file nb {file_nb}')
@@ -627,13 +628,13 @@ for file_nb in range(42):
 
     # expected lidar position (estimation)
     expected_X = 0 #X_position # (mm)
-    expected_Y = Y_position + 1200 # (mm)
+    expected_Y = Y_position + 900 # (mm)
     # other parmeters
     update_map = True # update vine_map file after process
     bin_size = lidar_kwargs['bin_size']
     expected_width = lidar_kwargs['expected_width']
     # vine_map file name and path, update flag
-    plot_name = 'AH222'
+    # plot_name = 'AH222' (this line has been moved up)
     path_to_vine_map_file = f'Log/vine_map_{plot_name}.csv'
     if file_nb == 0:
         create_new_map = True
@@ -660,7 +661,7 @@ print("")
 print("showing map")
 # plot full vine_map
 plt.figure(figsize=(15,15))
-plot_name = 'AH222'
+# plot_name = 'AH222'
 path_to_vine_map_file = f'Log/vine_map_{plot_name}.csv'
 vine_map = get_vine_map(path_to_vine_map_file, create_new=False, verbose=1)
 vine_map = np.asarray(vine_map)
