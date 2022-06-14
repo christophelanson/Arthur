@@ -14,19 +14,32 @@ from colorama import Fore
 import random
 
 
+
 class Lidar(QRunnable):
-    
+    """
+    The Lidar process creates several tables/dictionnaries :
+
+    dict_angle_distance = {} # dictionnaire angles et distances classés par paquets angulaire d'amplitude 0,5° : dimension 720 lignes,
+        plusieurs données possibles par ligne
+
+    outputDataList = [] # liste de données collectées sans classement par paquet : dimension 7.200 lignes (cf. nbDonnesACollecter)
+        [angle (degrés), distance (mm), scoreAvant (0 à 5), scoreArrière (0 à 5), scoreDébut objet (-10 à 10), 
+        scoreFin objet (-10 à 10), dDébutObjet (0/1), finObjet (0/1)]
+
+    listObjets = [] # liste des objets [index, angle départ, distance départ, angle fin, distance fin]
+
+    dict_angle_distanc is stored in Log/Lidar.csv (in getData() function, optional storage through flag)
+    outputDataList is strored in Log/outputLidarFile.csv, this file is overwritten each time Lidar is run
+    listObjets is stored in Log/outputObjectsFile.csv, this file is overwritten each time Lidar is run
+        listObjets is also stored il Log/ with a sequencenumber to trace history of Lidar scans
+    """
+
     def __init__(self): #, messageRouter):
         super(Lidar, self).__init__()
         self.hardwareName = "lidar"
         #self.dataBase = DataBase.DataBase(id=self.hardwareName)
         self.ser = serial.Serial(port='/dev/ttyUSB0', baudrate='115200') #/dev/ttyUSB0
         self.ser.close()
-        self.dict_angle_distance = {} # dictionnaire angles et distances classés par paquets angulaire d'amplitude 0,5° : dimension 720 lignes
-        self.outputDataList = [] # liste de données collectées sans classement par paquet : dimension 7.200 lignes
-        # [angle (degrés), distance (mm), scoreAvant (0 à 5), scoreArrière (0 à 5), scoreDébut objet (-10 à 10), scoreFin objet (-10 à 10), dDébutObjet (0/1), finObjet (0/1)]
-             
-        self.listObjets = [] # liste des objets [index, angle départ, distance départ, angle fin, distance fin]
         self.nbDonneesACollecter = 7200
         self.filtreEcartDistance = 100 #mm, écart de distance nécessaire pour changer d'objet
         self.seuilEcart = 6 # score de discontinuité à atteindre pour détecter un objet (début ou fin), cf. document protocole
@@ -63,41 +76,45 @@ class Lidar(QRunnable):
 
     def executeCommand(self, payload):
         if payload == "scan":
-            print(f"{Fore.GREEN}INFO ({self.hardwareName}) -> Start scan")
-            self.getData()
-            self.createOutputDataList()
+            print(f"{Fore.GREEN}INFO ({self.hardwareName}) -> lidar now scanning around")
+            outputDataList = self.getData(saveLidarCSV=False)
+            self.createOutputDataList(outputDataList)
 
 # fonction de calcul des scores Avant et Arrière, cf. doc protocole Lidar
-    def CalculScores(self):
+    def CalculScores(self,outputDataList):
         listScores=[]
-        for i, dataAngleDistance in enumerate(self.outputDataList):
+        for i, dataAngleDistance in enumerate(outputDataList):
             scoreAvant = 0
             scoreArriere = 0
-            if i>=len(self.outputDataList)-1 - 5:
+            if i>=len(outputDataList)-1 - 5:
                 scoreAvant=5
             else:
                 for j in range(1,6):
-                    if abs(dataAngleDistance[1]-self.outputDataList[i+j][1])<self.filtreEcartDistance :
+                    if abs(dataAngleDistance[1]-outputDataList[i+j][1])<self.filtreEcartDistance :
                         scoreAvant += 1
             if i<=4:
                 scoreArriere = 5
             else:
                 for j in range(1,6):
-                    if abs(dataAngleDistance[1]-self.outputDataList[i-j][1])<self.filtreEcartDistance:
+                    if abs(dataAngleDistance[1]-outputDataList[i-j][1])<self.filtreEcartDistance:
                         scoreArriere += 1
             listScores.append([scoreAvant,scoreArriere])
         listScores=np.asarray(listScores)
         return listScores
     
-    def getData(self):
+    def getData(self,saveLidarCSV=False):
+        """
+        runs a Lidar scan to collect self.nbDonneesACollecter data
+        returns outputDataList tha IS NOT the definite file (see createOutputDtaList function)
+        at this stage outputdataList only has 2 columns (angle and distance)
+        """
         self.ser.open()
         # Début de la collecte des données Lidar
         dataCount = 0 # compteur de données collectées (angle, distance)
         data = []
         data_start = False
-        self.outputDataList = []
-        self.listObjets = []
-        self.dict_angle_distance = {}
+        outputDataList = []
+        dict_angle_distance = {}
         while dataCount < self.nbDonneesACollecter :
             x = self.ser.read().hex()
             if x == "aa":
@@ -136,51 +153,68 @@ class Lidar(QRunnable):
                                 if distance > 100 : # mm, exclusion des données pour lesquelles la distance est trop faible
                                     dataCount = dataCount +1
                                     try :  # construction de self.dict_angle_distance, assemblage par paquets
-                                        list_angle_distance = self.dict_angle_distance[int(angle*2)]
+                                        list_angle_distance = dict_angle_distance[int(angle*2)]
                                         list_angle_distance.append(int(distance))
-                                        self.dict_angle_distance[int(angle*2)] = list_angle_distance
+                                        dict_angle_distance[int(angle*2)] = list_angle_distance
                                     except:
-                                        self.dict_angle_distance[int(angle*2)] = [int(distance)]
+                                        dict_angle_distance[int(angle*2)] = [int(distance)]
                                     # construction de outputDatList : ajout de la donnée à la liste
-                                    self.outputDataList.append([angle,int(distance)]) 
+                                    outputDataList.append([angle,int(distance)])
                         data = []
                         data_start = False
         print(f"{Fore.GREEN}INFO ({self.hardwareName}) -> {dataCount} raw data collected")
         self.stopLidar()
         self.ser.close()
 
+        # crée le fichier lidar.csv des données classées par valeurs d'angles égales à 0,5° près
+        if saveLidarCSV == True:
+            list_angle = list(dict_angle_distance.keys())
+            list_angle.sort()
+            with open("Log/lidar.csv",'w') as f:
+                for key in list_angle:
+                    f.write("%s,%s\n"%(key,dict_angle_distance[key]))
+
+        return outputDataList
+
+
     def stopLidar(self):
         self.ser.write(b'\0xA5\0x65')
 
-    def createOutputDataList(self,sequenceNumber=0):
 
-        self.outputDataList=np.asarray(self.outputDataList) # convertit la liste en numpy
+    def createOutputDataList(self,outputDataList, sequenceNumber=0):
+        """
+        builds a full outputDataList 
+        from a 2 columns (angle, distance) initial data list
+        then creates and returns a list of Objetcs
 
-        # crée le fichier lidar.csv des données classées par valeurs d'angles égales à 0,5° près
-        list_angle = list(self.dict_angle_distance.keys())
-        list_angle.sort()
-        with open("lidar.csv",'w') as f:
-            for key in list_angle:
-                f.write("%s,%s\n"%(key,self.dict_angle_distance[key]))
+        outputDataList structure :
+            [angle (degrés), distance (mm), scoreAvant (0 à 5), scoreArrière (0 à 5), scoreDébut objet (-10 à 10), 
+            scoreFin objet (-10 à 10), dDébutObjet (0/1), finObjet (0/1)]
+        listObjets structure :
+            [index, angle départ, distance départ, angle fin, distance fin]
+        """
+
+        listObjets = []
+        outputDataList = np.asarray(outputDataList) # convertit la liste en numpy
 
         # Début de la filtration des données et de la détection d'objets        
-        self.outputDataList = self.outputDataList[self.outputDataList[:,0].argsort()] # classe toutes les lignes par première colonne
+        outputDataList = outputDataList[outputDataList[:,0].argsort()] # classe toutes les lignes par première colonne
 
-        listScores = self.CalculScores()
-        self.outputDataList = np.concatenate((self.outputDataList,listScores),axis=1)
+        listScores = self.CalculScores(outputDataList)
+        outputDataList = np.concatenate((outputDataList,listScores),axis=1)
         # exclut les données avec scoreAvant et score Arriere <=1 (donc conserve ScoreAv+ScoreAr>1) et recalcule les scores
-        self.outputDataList = self.outputDataList[self.outputDataList[:,2]+self.outputDataList[:,3]>1 ]
-        self.outputDataList = self.outputDataList[:,0:2] # efface les colonnes scoreAvant et scoreArrière pour les recalculer sur les données filtrées
-        listScores = self.CalculScores() 
-        self.outputDataList = np.concatenate((self.outputDataList,listScores),axis=1)
+        outputDataList = outputDataList[outputDataList[:,2]+outputDataList[:,3]>1 ]
+        outputDataList = outputDataList[:,0:2] # efface les colonnes scoreAvant et scoreArrière pour les recalculer sur les données filtrées
+        listScores = self.CalculScores(outputDataList) 
+        outputDataList = np.concatenate((outputDataList,listScores),axis=1)
         # calcule scoreDébutObjet et scoreFinObjet (sans la condition sur le max effectuée plus loin)
         listScores2 = listScores[1:,:] # décale d'une ligne en supprimant la première
         listScores3 = listScores[:-1,:] # supprime la dernière ligne
-        listScore4 = (listScores2[:,0]-listScores2[:,1])-(listScores3[:,0]-listScores3[:,1])
-        scoreDebutObjet = np.insert(listScore4,0,0).reshape(-1,1) # ajoute la première donnée (fixée à 0) pour revenir à la taille de self.outputDataList
-        scoreFinObjet = np.insert(listScore4,-1,0).reshape(-1,1) # ajoute la denière donnée (fixée à 0) pour revenir à la taille de self.outputDataList
-        self.outputDataList = np.concatenate((self.outputDataList,scoreDebutObjet),axis=1)
-        self.outputDataList = np.concatenate((self.outputDataList,scoreFinObjet),axis=1)
+        listScores4 = (listScores2[:,0]-listScores2[:,1])-(listScores3[:,0]-listScores3[:,1])
+        scoreDebutObjet = np.insert(listScores4,0,0).reshape(-1,1) # ajoute la première donnée (fixée à 0) pour revenir à la taille de self.outputDataList
+        scoreFinObjet = np.insert(listScores4,-1,0).reshape(-1,1) # ajoute la denière donnée (fixée à 0) pour revenir à la taille de self.outputDataList
+        outputDataList = np.concatenate((outputDataList,scoreDebutObjet),axis=1)
+        outputDataList = np.concatenate((outputDataList,scoreFinObjet),axis=1)
         # condition sur le max
         listDebutObjetTemp = np.zeros(scoreDebutObjet.shape) # dimensionne une liste temporaire dont les valeurs sont 0
         listDebutObjet = np.copy(listDebutObjetTemp)
@@ -195,29 +229,29 @@ class Lidar(QRunnable):
             listFinObjetTemp[listFinObjetTemp != 1000] =0 # force toutes les valeurs différentes de 1.000 à zéro
         listDebutObjet[listDebutObjet < 4]=0
         listDebutObjet[listDebutObjet == 4]=1
-        listDebutObjet[self.outputDataList[:,4] < self.seuilEcart] = 0 # condition sur le Seuil : met à 0 tous les scores < SeuilEcart
+        listDebutObjet[outputDataList[:,4] < self.seuilEcart] = 0 # condition sur le Seuil : met à 0 tous les scores < SeuilEcart
         listFinObjet[listFinObjet < 4]=0
         listFinObjet[listFinObjet == 4]=1
-        listFinObjet[self.outputDataList[:,5] < self.seuilEcart] = 0 # condition sur le Seuil, idem
-        self.outputDataList = np.concatenate((self.outputDataList,listDebutObjet),axis=1)
-        self.outputDataList = np.concatenate((self.outputDataList,listFinObjet),axis=1)
+        listFinObjet[outputDataList[:,5] < self.seuilEcart] = 0 # condition sur le Seuil, idem
+        outputDataList = np.concatenate((outputDataList,listDebutObjet),axis=1)
+        outputDataList = np.concatenate((outputDataList,listFinObjet),axis=1)
 
         # Crée la table des objets
         nbObjets = 0
         flagObjet = False
-        for i, listData in enumerate(self.outputDataList):
+        for i, listData in enumerate(outputDataList):
             if not flagObjet:
                 if listData[6] == 1: # Début objet détecté
                     flagObjet = True
                     nbObjets += 1
-                    self.listObjets.append([nbObjets, listData[0], listData[1]])
+                    listObjets.append([nbObjets, listData[0], listData[1]])
             else:
                 if listData[7] == 1: # Fin de l'objet
-                   self.listObjets[-1] = self.listObjets[-1] + [listData[0], listData[1]]
+                   listObjets[-1] = listObjets[-1] + [listData[0], listData[1]]
                    flagObjet = False
         # dernier objet (si True (objet en cours), termine avec la dernière donnée
         if flagObjet == True:
-            self.listObjets[-1] = self.listObjets[-1] + [listData[0], listData[1]]
+            listObjets[-1] = listObjets[-1] + [listData[0], listData[1]]
 
         np.set_printoptions(suppress=True) # supprime la notation scientifique
         # print(self.outputDataList)
@@ -227,29 +261,31 @@ class Lidar(QRunnable):
 
         #print("Numéro de fichier pour sauvegarde ?")
         #numeroDeFichier = input()
-        self.numeroDeFichier = sequenceNumber
+        numeroDeFichier = sequenceNumber
 
         # crée le fichier lidar2.csv des données brutes (taille 7.200 x 2)
         # current file (fichier courant)
         nomDuFichier = "Log/outputLidarFile.csv"
-        np.savetxt(nomDuFichier, self.outputDataList, fmt= '%.2f', delimiter=",")
+        np.savetxt(nomDuFichier, outputDataList, fmt= '%.2f', delimiter=",")
 
         # crée le fichier des objets LidarObjects.csv
-        self.listObjets = np.asarray(self.listObjets) # convertit la liste en numpy
+        listObjets = np.asarray(listObjets) # convertit la liste en numpy
         # currentFile (fichier courant)
         nomDuFichier = "Log/outputObjectsFile.csv"
-        np.savetxt(nomDuFichier, self.listObjets, fmt= '%.2f', delimiter=",")
+        np.savetxt(nomDuFichier, listObjets, fmt= '%.2f', delimiter=",")
         # fichier à enregistrer avec le numéro de la séquence
-        nomDuFichier = "Log/outputObjectsFile" + str(self.numeroDeFichier) + ".csv"     
+        nomDuFichier = "Log/outputObjectsFile" + str(numeroDeFichier) + ".csv"     
 #        np.savetxt(nomDuFichier, self.listObjets, fmt= '%.2f', delimiter=",") # log
         print(f"{Fore.GREEN}INFO ({self.hardwareName}) -> Data collect completed and files created")
+
+        return listObjets
         
     def scan(self):
-            self.getData()
-            self.createOutputDataList()
+            outputDataList = self.getData()
+            self.createOutputDataList(outputDataList)
 
 
 if __name__ == "__main__":
     lidar = Lidar()
-    lidar.getData()
-    lidar.createOutputDataList()
+    outputDataList = lidar.getData()
+    lidar.createOutputDataList(outputDataList)

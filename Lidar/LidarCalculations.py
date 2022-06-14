@@ -27,7 +27,7 @@ verbose = 2
     'min_object_distance' : 200, # eliminate too close (mm)
     'max_object_distance' : 7000, # eliminate too far (mm)
     # the following parameters are used to filter objects by density
-    'max_nb_obj' : 3, #maximum allowed nb of objects (including self)
+    'max_nb_obj' : 3, # maximum allowed nb of objects (including self)
     'nbr_range' : 200 # within this distance (mm)
 }"""
 # loading from robotID.json
