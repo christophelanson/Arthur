@@ -68,7 +68,7 @@ class Compass(QRunnable):
         compass = self.readRegister16bits(AddressCOMPASS)/10
         pitch = self.readRegister8bits(AddressPITCH)
         roll = self.readRegister8bits(AddressROLL)
-        return str(compass)+"-"+str(pitch)+"-"+str(roll)
+        return str(compass)+","+str(pitch)+","+str(roll)
         
     def readRegister16bits(self, addr):        
             high = self.bus.read_byte_data(self.Device_Address, addr)

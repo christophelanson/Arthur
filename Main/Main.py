@@ -27,8 +27,8 @@ class Main(QMainWindow):
     def __init__(self):
         super(Main, self).__init__()
         
-        with open('Main/idRobot.json') as f: #Permet de recuperer l'uinque ID associé a la carte
-            self.idRobot = json.load(f)
+        with open('robotID.json') as f: #Permet de recuperer l'uinque ID associé a la carte
+            self.idRobot = json.load(f)["ID"]
         print(f"{Fore.GREEN}INFO (main) -> Initialising {self.idRobot}")
         listSensor = ["gyro", "miniLidar", "motor"] 
         self.dataBase = DataBase.DataBase("main")
@@ -47,7 +47,7 @@ class Main(QMainWindow):
 
         #self.hardwareHandler.addHardware("lidar", lidar.Lidar)
 
-        self.hardwareHandler.addHardware("miniLidar", MiniLidar.MiniLidar)
+        #self.hardwareHandler.addHardware("miniLidar", MiniLidar.MiniLidar)
 
         #self.hardwareHandler.addHardware("gyro", Gyro.Compass)
 
@@ -100,7 +100,7 @@ class Main(QMainWindow):
         
         self.radioInput = QLabel()
         self.radioInput.setText('Radio payload')
-        self.radioPayload = QLineEdit("send/motor_command/3-1-0-30-0")
+        self.radioPayload = QLineEdit("send/motor_command/3,1,0,30,0")
 
         self.roboticArmRun = QPushButton("Move robotic arm")
         self.roboticArmRun.pressed.connect(self.runRoboticArm) 
@@ -172,14 +172,14 @@ class Main(QMainWindow):
 
     def updateBoard(self):
         
-        gyroValue = str(self.gyro.getSensorValue()).split("-")
+        gyroValue = str(self.gyro.getSensorValue()).split(",")
         compass = gyroValue[0]
         picth = gyroValue[1]
         roll = gyroValue[2]
 
         # miniLidarValue = str(round(self.miniLidar.getSensorValue()))
 
-        motorValue = self.dataBase.getSensorValue("motor").split("-")
+        motorValue = self.dataBase.getSensorValue("motor").split(",")
         motorSpeed = str(motorValue[3])
         motorDirection = str(motorValue[1])
         motorTime = str(motorValue[0])
@@ -194,8 +194,13 @@ class Main(QMainWindow):
         print("Running Lidar")
         print("Folding Arm")
         payload="90,320,-50,-30,90,40"
-        self.mqtt.sendMessage(message="command/"+payload, receiver="roboticArm")
-        time.sleep(1)
+        res = bool(self.mqtt.sendMessage(message="command/"+payload, receiver="roboticArm", awnserNeeded=True))
+        print(res)
+        if res: 
+            print(f"{Fore.GREEN}INFO (Main) -> robticArm execute {payload} with succes")
+        else:
+            print(f"{Fore.RED}ERROR (Main) -> robticArm execute {payload} with error")
+
         print("Collecting Lidar data")
         self.mqtt.sendMessage(message="command/scan", receiver="lidar")
         time.sleep(5)
@@ -219,9 +224,9 @@ class Main(QMainWindow):
                 self.miniLidarValue.setText(f"MiniLidar value : \n\t Distance : {round(float(self.mqtt.lastPayload))}")
         
     def runMotor(self):
-        payload = str(self.motorTime.text()) + "-" + str(self.motorDirection.text()) + "-0-" + str(self.motorSpeed.text()) + "-0"
+        payload = str(self.motorTime.text()) + "," + str(self.motorDirection.text()) + ",0," + str(self.motorSpeed.text()) + ",0"
         self.dataBase.updateSensorValue("motor", payload)
-        payload = "run-" + str(self.motorTime.text()) + "-" + str(self.motorDirection.text()) + "-0-" + str(self.motorSpeed.text()) + "-0"
+        payload = "run," + str(self.motorTime.text()) + "," + str(self.motorDirection.text()) + ",0," + str(self.motorSpeed.text()) + ",0"
         if self.robotNumber.text() == str(self.idRobot["node"]):
             self.mqtt.sendMessage(message="command/"+payload, receiver="motor")
         else:
@@ -231,7 +236,7 @@ class Main(QMainWindow):
     def runRoboticArm(self):
         payload = str(self.roboticArmPayload.text())
         #self.dataBase.updateSensorValue("motor", payload)
-        #payload = "run-" + str(self.motorTime.text()) + "-" + str(self.motorDirection.text()) + "-0-" + str(self.motorSpeed.text()) + "-0"
+        #payload = "run-" + str(self.motorTime.text()) + "" + str(self.motorDirection.text()) + "-0-" + str(self.motorSpeed.text()) + "-0"
         if self.robotNumber.text() == str(self.idRobot["node"]):
             self.mqtt.sendMessage(message="command/"+payload, receiver="roboticArm")
         else:
