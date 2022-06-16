@@ -25,7 +25,7 @@ class Mqtt:
 
         self.json = Json.JsonHandler()
 
-        hardwareList = self.json.read("Main/idRobot.json")["modules"]
+        hardwareList = self.json.read("robotID.json")["ID"]["hardwareList"]
 
         for hardware in hardwareList:
             if hardware != self.hardwareName:
@@ -46,16 +46,19 @@ class Mqtt:
         self.lastPayload = self.lastMessage.split("/",1)[1]
         self.lastTopic = message.topic
         self.lastSender = self.lastTopic.split("/")[0]
-        print(self.hardwareName, "received message from:", self.lastSender, ":")
+        #print(f"{self.hardwareName} received {self.lastMessage} from: {self.lastSender}")
         #print("\r message: ", self.lastMessage)
         self.dictWaitingAwnser[message.topic] = False
+        #print("desactivate", message.topic)
     
     def sendMessage(self, message, receiver, awnserNeeded = False):
         topic = self.hardwareName + "/" + receiver
         self.client.publish(topic, message)
-        print(self.hardwareName, "send", message,"to", topic)
+        #print(self.hardwareName, "send", message,"to", topic)
         if awnserNeeded:
-            self.dictWaitingAwnser[ self.hardwareName + "/" + receiver ] = True
-            while self.dictWaitingAwnser[ self.hardwareName + "/" + receiver]:
+            responseTopic = receiver + "/" + self.hardwareName 
+            #print("waiting for", responseTopic )
+            self.dictWaitingAwnser[responseTopic] = True
+            while self.dictWaitingAwnser[responseTopic]:
                 pass
             return self.lastPayload

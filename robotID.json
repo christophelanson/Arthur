@@ -8,7 +8,8 @@
             "lidar",
             "miniLidar",
             "roboticArm",
-            "camera"
+            "camera",
+            "main"
         ],
         "info": ""
     },
@@ -49,11 +50,11 @@
         ],
         "attitude": [
             0,
-            190,
-            0
+            0,
+            190
         ],
         "lidar_kwargs": {
-            "plot_name" : "AH422",
+            "plot_name": "AH422",
             "bin_size": 10,
             "expected_width": 200,
             "expected_distance": 80,
