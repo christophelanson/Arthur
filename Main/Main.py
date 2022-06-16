@@ -47,7 +47,7 @@ class Main(QMainWindow):
 
         #self.hardwareHandler.addHardware("lidar", lidar.Lidar)
 
-        #self.hardwareHandler.addHardware("miniLidar", MiniLidar.MiniLidar)
+        self.hardwareHandler.addHardware("miniLidar", MiniLidar.MiniLidar)
 
         #self.hardwareHandler.addHardware("gyro", Gyro.Compass)
 
@@ -194,19 +194,28 @@ class Main(QMainWindow):
         print("Running Lidar")
         print("Folding Arm")
         payload="90,320,-50,-30,90,40"
+
         res = bool(self.mqtt.sendMessage(message="command/"+payload, receiver="roboticArm", awnserNeeded=True))
-        print(res)
         if res: 
-            print(f"{Fore.GREEN}INFO (Main) -> robticArm execute {payload} with succes")
+            print(f"{Fore.GREEN}INFO (Main) -> robticArm executed {payload} with succes")
         else:
-            print(f"{Fore.RED}ERROR (Main) -> robticArm execute {payload} with error")
+            print(f"{Fore.RED}ERROR (Main) -> robticArm executed {payload} with error")
 
         print("Collecting Lidar data")
-        self.mqtt.sendMessage(message="command/scan", receiver="lidar")
-        time.sleep(5)
+
+        res = bool(self.mqtt.sendMessage(message="command/scan", receiver="lidar", awnserNeeded=True))
+        if res: 
+            print(f"{Fore.GREEN}INFO (Main) -> lidar executed with succes")
+        else:
+            print(f"{Fore.RED}ERROR (Main) -> lidar executed  with error")
+
         print("Unfolding Arm")
         payload="90,180,250,10,90,40"
-        self.mqtt.sendMessage(message="command/"+payload, receiver="roboticArm")
+        res = bool(self.mqtt.sendMessage(message="command/"+payload, receiver="roboticArm", awnserNeeded=True))
+        if res: 
+            print(f"{Fore.GREEN}INFO (Main) -> robticArm executed {payload} with succes")
+        else:
+            print(f"{Fore.RED}ERROR (Main) -> robticArm executed {payload} with error")
 
     def closeEvent(self):
         app.quit()
@@ -228,7 +237,11 @@ class Main(QMainWindow):
         self.dataBase.updateSensorValue("motor", payload)
         payload = "run," + str(self.motorTime.text()) + "," + str(self.motorDirection.text()) + ",0," + str(self.motorSpeed.text()) + ",0"
         if self.robotNumber.text() == str(self.idRobot["node"]):
-            self.mqtt.sendMessage(message="command/"+payload, receiver="motor")
+            res = bool(self.mqtt.sendMessage(message="command/"+payload, receiver="motor", awnserNeeded=True))
+            if res: 
+                print(f"{Fore.GREEN}INFO (Main) -> motor executed {payload} with succes")
+            else:
+                print(f"{Fore.RED}ERROR (Main) -> motor executed {payload} with error")
         else:
             payload = 'motor_'+ 'command/'+  payload
             self.mqtt.sendMessage(message="send/"+payload, receiver="radio")
@@ -286,7 +299,6 @@ class Main(QMainWindow):
             time.sleep(3)
             # lidar
             self.runLidar()
-            time.sleep(1)
             # save current file in log
             path_to_output_objects_file = 'Log/outputObjectsFile.csv'
             lidar_objects = np.loadtxt(path_to_output_objects_file, delimiter=",", dtype=float)

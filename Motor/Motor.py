@@ -59,7 +59,8 @@ class Motor(QRunnable):
     
         if self.mqtt.lastCommand == "command":
             self.executeCommand(self.mqtt.lastPayload)
-        
+            self.mqtt.sendMessage(message="return/1", receiver=self.mqtt.lastSender)
+
         if self.mqtt.lastCommand == "gyroValue":
             self.gyroValue = int(self.mqtt.lastPayload.split(",")[0])
         self.messageReceived = False

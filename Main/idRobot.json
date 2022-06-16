@@ -1,6 +1,0 @@
-{
-"fullName": "Arthur",
-"name": "A",
-"node" : 1,
-"modules" : ["main", "lidar", "miniLidar", "gyro", "motor", "camera","radio"]
-}

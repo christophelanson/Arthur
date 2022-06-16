@@ -51,7 +51,7 @@ class RoboticArm(QRunnable):
             print(angles)
             angles = np.asarray(angles)
             self.servo.servoControler(angles)
-            self.mqtt.sendMessage(message="command/1", receiver=self.mqtt.lastSender)
+            self.mqtt.sendMessage(message="return/1", receiver=self.mqtt.lastSender)
         
     @pyqtSlot()
     def run(self):
