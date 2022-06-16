@@ -17,10 +17,11 @@ class Mqtt:
         self.lastMessage = ""
         self.lastPayload = ""
         self.lastCommand = ""
-        self.waitingAwnser = False
+        self.dictWaitingAwnser = {}
 
         for channel in listChannel:
             self.client.subscribe(channel)
+            self.dictWaitingAwnser[channel] = False
 
         self.json = Json.JsonHandler()
 
@@ -32,6 +33,10 @@ class Mqtt:
                 self.client.subscribe(channel)
                 print(f"{Fore.GREEN}INFO (MQTT/{self.hardwareName}) -> {self.hardwareName} subscribed to {channel}")
 
+                #channel = self.hardwareName+"/"+hardware
+                #self.client.subscribe(channel)
+                #print(f"{Fore.GREEN}INFO (MQTT/{self.hardwareName}) -> {self.hardwareName} subscribed to {channel}")
+
 
         self.client.loop_start()
     
@@ -41,16 +46,16 @@ class Mqtt:
         self.lastPayload = self.lastMessage.split("/",1)[1]
         self.lastTopic = message.topic
         self.lastSender = self.lastTopic.split("/")[0]
-        #print(self.hardwareName, "received message from:", self.lastSender, ":")
+        print(self.hardwareName, "received message from:", self.lastSender, ":")
         #print("\r message: ", self.lastMessage)
-        self.waitingAwnser = False
+        self.dictWaitingAwnser[message.topic] = False
     
     def sendMessage(self, message, receiver, awnserNeeded = False):
         topic = self.hardwareName + "/" + receiver
         self.client.publish(topic, message)
-        #print(self.hardwareName, "send", message,"to", receiver)
+        print(self.hardwareName, "send", message,"to", topic)
         if awnserNeeded:
-            self.waitingAwnser = True
-            while self.waitingAwnser:
+            self.dictWaitingAwnser[ self.hardwareName + "/" + receiver ] = True
+            while self.dictWaitingAwnser[ self.hardwareName + "/" + receiver]:
                 pass
             return self.lastPayload

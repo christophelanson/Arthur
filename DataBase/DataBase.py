@@ -37,11 +37,11 @@ class DataBase:
        # self.db.open()
         for sensor in listSensor:
             if sensor == "motor":
-                request = "INSERT OR REPLACE INTO SensorValue (sensor, value) " "VALUES ('"+str(sensor)+"', '0-0-0-0-0')"
+                request = "INSERT OR REPLACE INTO SensorValue (sensor, value) " "VALUES ('"+str(sensor)+"', '0,0,0,0,0')"
             elif sensor == "miniLidar":
                 request = "INSERT OR REPLACE INTO SensorValue (sensor, value) " "VALUES ('"+str(sensor)+"', '0')"
             else:
-                request = "INSERT OR REPLACE INTO SensorValue (sensor, value) " "VALUES ('"+str(sensor)+"', '0-0-0')"
+                request = "INSERT OR REPLACE INTO SensorValue (sensor, value) " "VALUES ('"+str(sensor)+"', '0,0,0')"
             self.query.exec_(request)
         #self.db.close()
     
@@ -58,5 +58,5 @@ class DataBase:
         #   if self.query.value(0) == sensor:
         #       return self.query.value(1)
         #self.db.close()
-        return "0-0-0-0"
+        return "0,0,0,0"
 

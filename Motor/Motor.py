@@ -61,7 +61,7 @@ class Motor(QRunnable):
             self.executeCommand(self.mqtt.lastPayload)
         
         if self.mqtt.lastCommand == "gyroValue":
-            self.gyroValue = int(self.mqtt.lastPayload.split("-")[0])
+            self.gyroValue = int(self.mqtt.lastPayload.split(",")[0])
         self.messageReceived = False
         
     @pyqtSlot()
@@ -86,7 +86,7 @@ class Motor(QRunnable):
     def getGyroValue(self):
         #print(self.dataBase.getSensorValue("gyro"))
         #return float(self.dataBase.getSensorValue("gyro").split("-")[0])
-        return float(self.gyro.getSensorValue().split("-")[0])
+        return float(self.gyro.getSensorValue().split(",")[0])
         
         #return self.messageRouter.route(senderName=self.node, receiverName=self.node, hardware="gyro", command=command, isReturn=False, channel="own")
         
@@ -194,7 +194,7 @@ class Motor(QRunnable):
 
     def executeCommand(self, command):
         
-        command = command.split("-")
+        command = command.split(",")
         action = command[0]
         payload = command[1:]
         payload = [float(i) for i in payload]
