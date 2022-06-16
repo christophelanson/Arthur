@@ -44,7 +44,7 @@
         "type": "YLidarX2",
         "position": [
             0,
-            170,
+            -170,
             170
         ],
         "attitude": [
@@ -53,6 +53,7 @@
             0
         ],
         "lidar_kwargs": {
+            "plot_name" : "AH422",
             "bin_size": 10,
             "expected_width": 200,
             "expected_distance": 80,

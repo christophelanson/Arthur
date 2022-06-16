@@ -9,13 +9,13 @@ from sklearn.neighbors import NearestNeighbors
 file_nb = 0
 path_to_output_lidar_file= f'Log/outputLidarFile{file_nb}.csv'
 path_to_output_objects_file= f'Log/outputObjectsFile{file_nb}.csv'
-plot_name = 'AH422' # numéro de cadastre de la parcelle
 
 verbose = 2
 # dictionnary of hyper and other parameters
 # structure detailed below
 """lidar_kwargs = {
     # hyper parameters : vine grid description and calculation precision
+    'plot_name' : name of the plot
     'bin_size' : 10, # cm, represents the precision for object grouping
     'expected_width' : 200, # cm, the space between two rows of vines
     'expected_distance' : 80, # cm, the space between to neighbor vines within each row
@@ -34,6 +34,7 @@ verbose = 2
 with open('robotID.json') as jsonFile:
     data = json.load(jsonFile)
 lidar_kwargs = data['lidar']['lidar_kwargs']
+plot_name = lidar_kwargs['plot_name'] # numéro de cadastre de la parcelle
 
 def process_lidar_file_to_landmarks(path_to_output_objects_file, kwargs, verbose=0):
 
@@ -621,7 +622,7 @@ if __name__ == "__main__":
     X_position = 0
     Y_position = 0
 
-    for file_nb in range(10):
+    for file_nb in range(1,10):
 
         print()
         print(f'processing file nb {file_nb}')
