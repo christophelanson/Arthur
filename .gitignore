@@ -1,3 +1,4 @@
 # ignore jpg and csv
 *.jpg
 *.csv
+robotID.json
