@@ -60,6 +60,8 @@ class Motor(QRunnable):
         if self.mqtt.lastCommand == "command":
             self.executeCommand(self.mqtt.lastPayload)
             self.mqtt.sendMessage(message="return/1", receiver=self.mqtt.lastSender)
+        
+        
 
         if self.mqtt.lastCommand == "gyroValue":
             self.gyroValue = int(self.mqtt.lastPayload.split(",")[0])
@@ -158,6 +160,24 @@ class Motor(QRunnable):
         self.stop()
         print("MOTOR STOP")
 
+    def rotate(self, angle, speed):
+
+        startDirection = self.getGyroValue()
+        endDirection = startDirection + angle
+
+        if (angle > 0):
+            speedLeft  = speed
+            speedRight = -speed
+        else:
+            speedLeft  = -speed
+            speedRight = speed
+
+        while (abs(endDirection - self.getGyroValue())%360) > 1:
+            self.driveMotor(speedLeft, speedRight, 0.1, 1)
+        self.stop()
+        
+
+
     def turn(self, timeMove, direction, initSpeed, maxSpeed, finalSpeed, maxRotSpeed):
         self.state = "turning"
         speedLeft = maxSpeed + maxRotSpeed
@@ -204,9 +224,15 @@ class Motor(QRunnable):
         if action == "run":
             print("Motor start run")
             self.move(payload[0], payload[1], payload[2], payload[3], payload[4])
+        
+        if action == "rotate":
+            print("Motor rotating")
+            self.rotate(payload[0], payload[1])
+
         if action == "TURN":
             print("Motor start turn")
             self.move(payload[0], payload[1], payload[2], payload[3], payload[4], payload[5])
+
         if action == "STOP":
             print("Motor stopped")
             self.stop

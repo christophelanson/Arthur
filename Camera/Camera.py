@@ -31,6 +31,7 @@ class Camera(QRunnable):
     
     def capture(self,fileName="test"):
         os.system(f"raspistill -rot 270 -q 10 -t 1000 -o {self.photoPath}{fileName}.jpg")
+
     
 
 if __name__ == "__main__":

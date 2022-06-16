@@ -83,8 +83,8 @@ class Main(QMainWindow):
         self.runLidarButton.pressed.connect(self.runLidar) 
 
         self.robotNumberInput = QLabel()
-        self.robotNumberInput.setText("Robot number ?")
-        self.robotNumber = QLineEdit("1")
+        self.robotNumberInput.setText("Robot name ?")
+        self.robotNumber = QLineEdit(self.idRobot["name"])
 
         self.speedInput = QLabel()
         self.speedInput.setText('Motor speed:')
@@ -97,6 +97,13 @@ class Main(QMainWindow):
         self.directionInput = QLabel()
         self.directionInput.setText('Motor direction:')
         self.motorDirection = QLineEdit("1")
+
+        self.rotationInput = QLabel()
+        self.rotationInput.setText('Rotation angle:')
+        self.rotationPayload = QLineEdit("30")
+        
+        self.rotationButton = QPushButton("Rotate")
+        self.rotationButton.pressed.connect(self.motorRotate) 
         
         self.radioInput = QLabel()
         self.radioInput.setText('Radio payload')
@@ -132,6 +139,12 @@ class Main(QMainWindow):
         layout.addWidget(self.timeInput)
         layout.addWidget(self.motorTime)
 
+        layout.addWidget(self.rotationInput)
+        layout.addWidget(self.rotationPayload)
+        layout.addWidget(self.rotationButton)
+
+       
+
         layout.addWidget(self.stopMotorButton)
         layout.addWidget(self.closeCodeButton)
         layout.addWidget(self.cameraButton)
@@ -150,7 +163,6 @@ class Main(QMainWindow):
         layout.addWidget(self.fullSequenceLabel)
         layout.addWidget(self.nbOfSequences)
         layout.addWidget(self.fullSequenceButton)
-        
         layout.addWidget(self.gyroValue)
         layout.addWidget(self.miniLidarValue)
 
@@ -236,7 +248,7 @@ class Main(QMainWindow):
         payload = str(self.motorTime.text()) + "," + str(self.motorDirection.text()) + ",0," + str(self.motorSpeed.text()) + ",0"
         self.dataBase.updateSensorValue("motor", payload)
         payload = "run," + str(self.motorTime.text()) + "," + str(self.motorDirection.text()) + ",0," + str(self.motorSpeed.text()) + ",0"
-        if self.robotNumber.text() == str(self.idRobot["node"]):
+        if self.robotNumber.text() == str(self.idRobot["name"]):
             res = bool(self.mqtt.sendMessage(message="command/"+payload, receiver="motor", awnserNeeded=True))
             if res: 
                 print(f"{Fore.GREEN}INFO (Main) -> motor executed {payload} with succes")
@@ -246,11 +258,24 @@ class Main(QMainWindow):
             payload = 'motor_'+ 'command/'+  payload
             self.mqtt.sendMessage(message="send/"+payload, receiver="radio")
     
+    def motorRotate(self):
+        payload = "rotate," +str(self.rotationPayload.text()) + "," + str(self.motorSpeed.text())
+
+        if self.robotNumber.text() == str(self.idRobot["name"]):
+            res = bool(self.mqtt.sendMessage(message="command/"+payload, receiver="motor", awnserNeeded=True))
+            if res: 
+                print(f"{Fore.GREEN}INFO (Main) -> motor executed {payload} with succes")
+            else:
+                print(f"{Fore.RED}ERROR (Main) -> motor executed {payload} with error")
+        else:
+            payload = 'motor_'+ 'command/'+  payload
+            self.mqtt.sendMessage(message="send/"+payload, receiver="radio")
+
     def runRoboticArm(self):
         payload = str(self.roboticArmPayload.text())
         #self.dataBase.updateSensorValue("motor", payload)
         #payload = "run-" + str(self.motorTime.text()) + "" + str(self.motorDirection.text()) + "-0-" + str(self.motorSpeed.text()) + "-0"
-        if self.robotNumber.text() == str(self.idRobot["node"]):
+        if self.robotNumber.text() == str(self.idRobot["name"]):
             self.mqtt.sendMessage(message="command/"+payload, receiver="roboticArm")
         else:
             payload = 'roboticArm_'+ 'command/'+  payload

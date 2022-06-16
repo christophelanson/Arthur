@@ -39,6 +39,7 @@
         "info": "Torn in kg.cm"
     },
     "radio": {
+        "nodeIDs": ["Daddy"],
         "info": ""
     },
     "lidar": {
