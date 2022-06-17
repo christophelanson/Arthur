@@ -8,11 +8,12 @@ from Json import Json
 class MqttNetwork:
 
     def __init__(self, robotID, on_message):
+
         self.jsonHandler = Json.JsonHandler()
         self.robotID = robotID
         self.client = mqtt.Client(client_id=self.robotID)
         self.client.on_message=on_message
-        self.client.connect('10.0.0.39')
+        self.client.connect('10.0.0.1')
         self.lastTopic = ""
         self.lastSender = ""
         self.lastMessage = ""
@@ -27,21 +28,7 @@ class MqttNetwork:
                 channel = robot+"/"+self.robotID
                 self.client.subscribe(channel)
                 print(f"{Fore.GREEN}INFO (MQTT/{self.robotID}) -> {self.robotID} subscribed to {channel}")
-
-        self.json = Json.JsonHandler()
-
-        hardwareList = self.json.read("robotID.json")["ID"]["hardwareList"]
-
-        for hardware in hardwareList:
-            if hardware != self.hardwareName:
-                channel = hardware+"/"+self.hardwareName
-                self.client.subscribe(channel)
-                print(f"{Fore.GREEN}INFO (MQTT/{self.hardwareName}) -> {self.hardwareName} subscribed to {channel}")
-
-                #channel = self.hardwareName+"/"+hardware
-                #self.client.subscribe(channel)
-                #print(f"{Fore.GREEN}INFO (MQTT/{self.hardwareName}) -> {self.hardwareName} subscribed to {channel}")
-
+                
         self.client.loop_start()
     
     def decodeMessage(self, message):
