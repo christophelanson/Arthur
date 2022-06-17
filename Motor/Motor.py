@@ -163,7 +163,7 @@ class Motor(QRunnable):
     def rotate(self, angle, speed):
 
         startDirection = self.getGyroValue()
-        endDirection = startDirection + angle
+        endDirection = (startDirection + angle)%360
 
         if (angle > 0):
             speedLeft  = speed

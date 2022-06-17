@@ -55,11 +55,24 @@ class Main(QMainWindow):
         
         self.gyro = Gyro.Compass()
 
-        #self.miniLidar = MiniLidar.MiniLidar()
+        self.miniLidar = MiniLidar.MiniLidar()
 
         self.lidar = Lidar.Lidar()
 
-        layout = QVBoxLayout()
+        
+
+        self.listChannel = ["all"]
+        self.mqtt = Mqtt.Mqtt(hardwareName="main", on_message=self.on_message, listChannel=self.listChannel)
+
+        self.showWindow()
+
+        timer = QTimer(self)
+        timer.setInterval(500)
+        timer.timeout.connect(self.updateBoard)
+        timer.start()
+        
+    def showWindow(self):
+        
 	
         self.runMotorButton = QPushButton("Run Motor")
         self.runMotorButton.pressed.connect(self.runMotor)    
@@ -82,38 +95,22 @@ class Main(QMainWindow):
         self.runLidarButton = QPushButton("Run Lidar")
         self.runLidarButton.pressed.connect(self.runLidar) 
 
-        self.robotNumberInput = QLabel()
-        self.robotNumberInput.setText("Robot name ?")
+        self.robotNumberLabel = QLabel("Robot name")
         self.robotNumber = QLineEdit(self.idRobot["name"])
 
-        self.speedInput = QLabel()
-        self.speedInput.setText('Motor speed:')
-        self.motorSpeed = QLineEdit("50")
+        self.motorPayload = QLineEdit("3,1,0,50,0")
 
-        self.timeInput = QLabel()
-        self.timeInput.setText('Motor time:')
-        self.motorTime = QLineEdit("3")
-
-        self.directionInput = QLabel()
-        self.directionInput.setText('Motor direction:')
-        self.motorDirection = QLineEdit("1")
-
-        self.rotationInput = QLabel()
-        self.rotationInput.setText('Rotation angle:')
         self.rotationPayload = QLineEdit("30")
-        
         self.rotationButton = QPushButton("Rotate")
         self.rotationButton.pressed.connect(self.motorRotate) 
         
-        self.radioInput = QLabel()
-        self.radioInput.setText('Radio payload')
+        self.radioLabel = QLabel('Radio payload')
         self.radioPayload = QLineEdit("send/motor_command/3,1,0,30,0")
 
         self.roboticArmRun = QPushButton("Move robotic arm")
         self.roboticArmRun.pressed.connect(self.runRoboticArm) 
 
-        self.roboticArmInput = QLabel()
-        self.roboticArmInput.setText('Robotic Arm payload')
+        self.roboticArmLabel = QLabel('Robotic arm payload')
         self.roboticArmPayload = QLineEdit("90,200,200,0,90,40")
 
         self.fullSequenceButton = QPushButton("Run full sequences")
@@ -129,58 +126,29 @@ class Main(QMainWindow):
         self.miniLidarValue = QLabel()
         self.miniLidarValue.setText('Mini lidar value:')
 
-        layout.addWidget(self.robotNumberInput)
-        layout.addWidget(self.robotNumber)
-        layout.addWidget(self.runMotorButton)
-        layout.addWidget(self.speedInput)
-        layout.addWidget(self.motorSpeed)
-        layout.addWidget(self.directionInput)
-        layout.addWidget(self.motorDirection)
-        layout.addWidget(self.timeInput)
-        layout.addWidget(self.motorTime)
+        layout = QFormLayout()
 
-        layout.addWidget(self.rotationInput)
-        layout.addWidget(self.rotationPayload)
-        layout.addWidget(self.rotationButton)
-
-       
-
-        layout.addWidget(self.stopMotorButton)
-        layout.addWidget(self.closeCodeButton)
-        layout.addWidget(self.cameraButton)
-        layout.addWidget(self.objectsCameraButton)
-
-        layout.addWidget(self.radioSendButton)
-        layout.addWidget(self.radioInput)
-        layout.addWidget(self.radioPayload)
-        
-        layout.addWidget(self.runLidarButton)
-
-        layout.addWidget(self.roboticArmRun)
-        layout.addWidget(self.roboticArmInput)
-        layout.addWidget(self.roboticArmPayload)
-
-        layout.addWidget(self.fullSequenceLabel)
-        layout.addWidget(self.nbOfSequences)
-        layout.addWidget(self.fullSequenceButton)
-        layout.addWidget(self.gyroValue)
-        layout.addWidget(self.miniLidarValue)
+        layout.addRow(self.robotNumberLabel,self.robotNumber)
+        layout.addRow(self.runMotorButton,self.motorPayload)
+        layout.addRow(self.rotationButton,self.rotationPayload)
+        layout.addRow(self.stopMotorButton)
+        layout.addRow(self.closeCodeButton)
+        layout.addRow(self.cameraButton)
+        layout.addRow(self.objectsCameraButton)
+        layout.addRow(self.radioSendButton,self.radioPayload)
+        layout.addRow(self.runLidarButton)
+        layout.addRow(self.roboticArmRun,self.roboticArmPayload)
+        layout.addRow(self.fullSequenceButton,self.nbOfSequences)
+        layout.addRow(self.gyroValue)
+        layout.addRow(self.miniLidarValue)
 
         w = QWidget()
         w.setLayout(layout)
+        self.setWindowTitle("User Interface")
 
         self.setCentralWidget(w)
 
         self.show()
-
-        self.listChannel = ["all"]
-        self.mqtt = Mqtt.Mqtt(hardwareName="main", on_message=self.on_message, listChannel=self.listChannel)
-
-        timer = QTimer(self)
-        timer.setInterval(500)
-        timer.timeout.connect(self.updateBoard)
-        timer.start()
-        
 
     def updateBoard(self):
         
@@ -196,11 +164,11 @@ class Main(QMainWindow):
         motorDirection = str(motorValue[1])
         motorTime = str(motorValue[0])
 
-        self.gyroValue.setText(f"Gyro value : \n\tCompass: {compass} Pitch: {picth} Roll: {roll} ")
+        self.gyroValue.setText(f"Gyro value: \tCompass: {compass} \tPitch: {picth} \tRoll: {roll} ")
         # self.miniLidarValue.setText(f"MiniLidar value : \n\t Distance : {miniLidarValue}")
-        self.motorSpeed.setPlaceholderText(motorSpeed)
-        self.motorDirection.setPlaceholderText(motorDirection)
-        self.motorTime.setPlaceholderText(motorTime)
+        #self.motorSpeed.setPlaceholderText(motorSpeed)
+        #self.motorDirection.setPlaceholderText(motorDirection)
+        #self.motorTime.setPlaceholderText(motorTime)
 
     def runLidar(self):
         print("Running Lidar")
@@ -242,10 +210,10 @@ class Main(QMainWindow):
         if self.mqtt.lastCommand == "state":
             #print("State,", self.mqtt.lastSender, "is", self.mqtt.lastPayload)
             if self.mqtt.lastSender == "miniLidar":
-                self.miniLidarValue.setText(f"MiniLidar value : \n\t Distance : {round(float(self.mqtt.lastPayload))}")
+                self.miniLidarValue.setText(f"MiniLidar value: \tDistance : {round(float(self.mqtt.lastPayload))} mm")
         
     def runMotor(self):
-        payload = str(self.motorTime.text()) + "," + str(self.motorDirection.text()) + ",0," + str(self.motorSpeed.text()) + ",0"
+        payload = str(self.motorPayload.text())
         self.dataBase.updateSensorValue("motor", payload)
         payload = "run," + str(self.motorTime.text()) + "," + str(self.motorDirection.text()) + ",0," + str(self.motorSpeed.text()) + ",0"
         if self.robotNumber.text() == str(self.idRobot["name"]):
