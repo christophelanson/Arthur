@@ -36,7 +36,9 @@
     "motors": {
         "numberOfMotors": 6,
         "motorTorn": 8.8,
-        "info": "Torn in kg.cm"
+        "maxSpeed": 0.873,
+        "dT": 0.08,
+        "info": "Torn kg.cm, maxSpeed m/s, dT sec incremental time step for acceleration"
     },
     "radio": {
         "nodeIDs": ["Daddy"],
