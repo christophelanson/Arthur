@@ -117,7 +117,7 @@ class Main(QMainWindow):
         
         self.radioLabel = QLabel('Radio payload')
         self.radioPayload = QLineEdit("send/motor_command/3,1,0,30,0")
-
+        
         self.roboticArmRun = QPushButton("Move robotic arm")
         self.roboticArmRun.pressed.connect(self.runRoboticArm) 
 

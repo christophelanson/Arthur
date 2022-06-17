@@ -2,13 +2,18 @@ import RPi.GPIO as GPIO
 import time
 import numpy as np
 from Message.MessageRouter import MessageRouter
+import json
 from PyQt5.QtCore import *
 from PyQt5.QtGui import *
 from PyQt5.QtWidgets import *
 from Mqtt import Mqtt
 from DataBase import DataBase
 from Gyro import Gyro
-  
+
+# loading from robotID.json
+with open('robotID.json') as jsonFile:
+    robotID = json.load(jsonFile)
+
 class Motor(QRunnable):
 
     def __init__(self):
@@ -22,7 +27,7 @@ class Motor(QRunnable):
         self.INB = 6     #19 => 6
         self.ENA = 16
         self.ENB = 13
-        self.dT = 0.08
+        self.dT = robotID['motors']['dT']
         self.Step = 0
         self.listStepUp = [1 / 12, 2 / 12, 3 / 12, 3 / 12, 2 / 12, 1 / 12]
         self.listStepDown =  [-1 / 12, -2 / 12, -3 / 12, -3 / 12, -2 / 12,-1 / 12]
