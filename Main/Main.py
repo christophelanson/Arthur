@@ -18,17 +18,21 @@ from MiniLidar import MiniLidar
 from Camera import Camera
 from Gyro import Gyro
 from Radio import Radio
+from Wifi import Wifi
 from DataBase import DataBase
 from RoboticArm import RoboticArm
+from Json import Json
+
 
 
 class Main(QMainWindow):
 
     def __init__(self):
         super(Main, self).__init__()
-        
-        with open('robotID.json') as f: #Permet de recuperer l'uinque ID associé a la carte
-            self.idRobot = json.load(f)["ID"]
+        self.jsonHandler = Json.JsonHandler()
+        self.idRobot = self.jsonHandler.read("robotID.json")["ID"]
+        self.hardwareList = self.idRobot["hardwareList"]
+
         print(f"{Fore.GREEN}INFO (main) -> Initialising {self.idRobot}")
         listSensor = ["gyro", "miniLidar", "motor"] 
         self.dataBase = DataBase.DataBase("main")
@@ -37,29 +41,36 @@ class Main(QMainWindow):
         self.hardwareHandler = HardwareHandler.HardwareHandler()
         # 1er paramètre : nom du hardware, 2 ème paramètre class du hardware
 
-        self.hardwareHandler.addHardware("radio", Radio.Radio)
+        if "wifi" in self.hardwareList:
+            self.hardwareHandler.addHardware("wifi", Wifi.Wifi)
+        if "radio" in self.hardwareList:
+            self.hardwareHandler.addHardware("radio", Radio.Radio)
 
-        self.hardwareHandler.addHardware("motor", Motor.Motor)
+        if "motor" in self.hardwareList:
+            self.hardwareHandler.addHardware("motor", Motor.Motor)
 
-        self.hardwareHandler.addHardware("roboticArm", RoboticArm.RoboticArm)
+        if "roboticArm" in self.hardwareList:
+            self.hardwareHandler.addHardware("roboticArm", RoboticArm.RoboticArm)
 
-        self.hardwareHandler.addHardware("camera", Camera.Camera)
+        if "camera" in self.hardwareList:
+            self.hardwareHandler.addHardware("camera", Camera.Camera)
 
         #self.hardwareHandler.addHardware("lidar", lidar.Lidar)
-
-        self.hardwareHandler.addHardware("miniLidar", MiniLidar.MiniLidar)
+        if "miniLidar" in self.hardwareList:
+            self.hardwareHandler.addHardware("miniLidar", MiniLidar.MiniLidar)
 
         #self.hardwareHandler.addHardware("gyro", Gyro.Compass)
 
         self.hardwareHandler.runThreadHardware()
         
-        self.gyro = Gyro.Compass()
+        if "gyro" in self.hardwareList:
+            self.gyro = Gyro.Compass()
 
-        self.miniLidar = MiniLidar.MiniLidar()
+        if "miniLidar" in self.hardwareList:
+            self.miniLidar = MiniLidar.MiniLidar()
 
-        self.lidar = Lidar.Lidar()
-
-        
+        if "lidar" in self.hardwareList:
+            self.lidar = Lidar.Lidar()
 
         self.listChannel = ["all"]
         self.mqtt = Mqtt.Mqtt(hardwareName="main", on_message=self.on_message, listChannel=self.listChannel)
@@ -152,23 +163,13 @@ class Main(QMainWindow):
 
     def updateBoard(self):
         
-        gyroValue = str(self.gyro.getSensorValue()).split(",")
-        compass = gyroValue[0]
-        picth = gyroValue[1]
-        roll = gyroValue[2]
+        if "gyro" in self.hardwareList:
+            gyroValue = str(self.gyro.getSensorValue()).split(",")
+            compass = gyroValue[0]
+            picth = gyroValue[1]
+            roll = gyroValue[2]
+            self.gyroValue.setText(f"Gyro value: \tCompass: {compass} \tPitch: {picth} \tRoll: {roll} ")
 
-        # miniLidarValue = str(round(self.miniLidar.getSensorValue()))
-
-        motorValue = self.dataBase.getSensorValue("motor").split(",")
-        motorSpeed = str(motorValue[3])
-        motorDirection = str(motorValue[1])
-        motorTime = str(motorValue[0])
-
-        self.gyroValue.setText(f"Gyro value: \tCompass: {compass} \tPitch: {picth} \tRoll: {roll} ")
-        # self.miniLidarValue.setText(f"MiniLidar value : \n\t Distance : {miniLidarValue}")
-        #self.motorSpeed.setPlaceholderText(motorSpeed)
-        #self.motorDirection.setPlaceholderText(motorDirection)
-        #self.motorTime.setPlaceholderText(motorTime)
 
     def runLidar(self):
         print("Running Lidar")
