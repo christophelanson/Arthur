@@ -1,15 +1,12 @@
 {
+    "environment": {
+        "robotNames" : ["Arthur"]
+    },
     "ID": {
-        "name": "Arthur",
+        "name": "Daddy",
         "hardwareList": [
-            "motor",
-            "radio",
-            "compass",
-            "lidar",
-            "miniLidar",
-            "roboticArm",
-            "camera",
-            "main"
+            "main",
+            "wifi"
         ],
         "info": ""
     },
