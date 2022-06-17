@@ -35,7 +35,26 @@ def lidar_to_roboticArm_conversion(lidarAngle,lidarDistance):
     roboticArmDistance = sqrt(lidarDistance**2+lidarRoboticArmDistance**2-2*lidarDistance*lidarRoboticArmDistance*cos(lidarAngle-lidarRoboticArmAngle))
     roboticArmAngle = acos((lidarDistance**2-lidarRoboticArmDistance**2-roboticArmDistance**2)/2/lidarRoboticArmDistance/roboticArmDistance)+lidarRoboticArmAngle
     roboticArmAngle = roboticArmAngle * 180/pi
-    return roboticArmAngle, roboticArmDistance
+    return round(roboticArmAngle,2), round(roboticArmDistance)
 
+def motor_distance_to_time(distance,initSpeed,maxSpeed,finalSpeed,smoothRun = True):
+    """
+    for a given distance in m and a motor speed given as a percentage of (an input 50 means 50% of maxMotorSpeed)
+    returns expected time in sec to cover this distance
+    
+    smoothRun = True: takes acceleration and deceleration ito account
+    smoothRun = False : assumes full speed all the way
 
-print(lidar_to_roboticArm_conversion(65,1000))
+    NB : maxMotorSpeed in m/s
+    """
+    dT = robotID['motors']['dT']
+    maxMotorSpeed = robotID['motors']['maxSpeed']
+    if smoothRun:
+        runTime = ((distance/dT-2.5*(initSpeed+finalSpeed)/100)/(maxSpeed/100)+5)*dT/maxMotorSpeed
+    else:
+        runTime = distance/(maxSpeed/100)/maxMotorSpeed
+    return round(runTime,2)
+
+#print(lidar_to_roboticArm_conversion(65,1000))
+print(motor_distance_to_time(0.873,0,50,00, smoothRun=True))
+print(motor_distance_to_time(0.873,0,100,0, smoothRun=False))
