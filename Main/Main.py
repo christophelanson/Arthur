@@ -59,7 +59,8 @@ class Main(QMainWindow):
         if "miniLidar" in self.hardwareList:
             self.hardwareHandler.addHardware("miniLidar", MiniLidar.MiniLidar)
 
-        #self.hardwareHandler.addHardware("gyro", Gyro.Compass)
+        #if "gyro" in self.hardwareList:
+        #    self.hardwareHandler.addHardware("gyro", Gyro.Compass)
 
         self.hardwareHandler.runThreadHardware()
         
@@ -81,49 +82,58 @@ class Main(QMainWindow):
         timer.setInterval(500)
         timer.timeout.connect(self.updateBoard)
         timer.start()
-        
+
+
     def showWindow(self):
         
-	
-        self.runMotorButton = QPushButton("Run Motor")
+        # Robot name
+        self.robotNumberLabel = QLabel("Robot name")
+        self.robotNumber = QLineEdit(self.idRobot["name"])
+
+        # Motors
+        self.motorPayload = QLineEdit("3,1,0,50,0")
+        self.runMotorButton = QPushButton("Motor run            ")
         self.runMotorButton.pressed.connect(self.runMotor)    
 
-        self.stopMotorButton = QPushButton("Stop Motor")
+        self.rotationPayload = QLineEdit("30")
+        self.rotationButton = QPushButton("Motor rotate         ")
+        self.rotationButton.pressed.connect(self.motorRotate) 
+
+        self.stopMotorButton = QPushButton("Motor stop")
         self.stopMotorButton.pressed.connect(self.stopMotor) 
 
+        #Camera
         self.cameraButton = QPushButton("Camera")
         self.cameraButton.pressed.connect(self.photoCamera)   
 
         self.objectsCameraButton = QPushButton("Lidar Objects Camera Shoot")
         self.objectsCameraButton.pressed.connect(self.objectsCamera)
 
-        self.radioSendButton = QPushButton("Radio send")
+        # Radio and wifi messages
+        self.radioSendButton = QPushButton("Send via radio          ")
         self.radioSendButton.pressed.connect(self.sendRadio) 
 
-        self.closeCodeButton = QPushButton("Close Code")
-        self.closeCodeButton.pressed.connect(self.closeEvent) 
+        self.wifiSendButton = QPushButton("Send via wifi            ")
+        self.wifiSendButton.pressed.connect(self.sendWifi)
 
+        self.messageLabel = QLabel('Message payload')
+        self.messagePayload = QLineEdit("motor/run/3,1,0,30,0")
+
+        # Lidar
         self.runLidarButton = QPushButton("Run Lidar")
         self.runLidarButton.pressed.connect(self.runLidar) 
-
-        self.robotNumberLabel = QLabel("Robot name")
-        self.robotNumber = QLineEdit(self.idRobot["name"])
-
-        self.motorPayload = QLineEdit("3,1,0,50,0")
-
-        self.rotationPayload = QLineEdit("30")
-        self.rotationButton = QPushButton("Rotate")
-        self.rotationButton.pressed.connect(self.motorRotate) 
         
-        self.radioLabel = QLabel('Radio payload')
-        self.radioPayload = QLineEdit("send/motor_command/3,1,0,30,0")
-        
-        self.roboticArmRun = QPushButton("Move robotic arm")
-        self.roboticArmRun.pressed.connect(self.runRoboticArm) 
+        # Robotic arm
+        self.moveRoboticArmButton = QPushButton("Move robotic arm")
+        self.moveRoboticArmButton.pressed.connect(self.moveRoboticArm) 
+
+        self.foldRoboticArmButton = QPushButton("Fold robotic arm")
+        self.foldRoboticArmButton.pressed.connect(self.foldRoboticArm) 
 
         self.roboticArmLabel = QLabel('Robotic arm payload')
         self.roboticArmPayload = QLineEdit("90,200,200,0,90,40")
 
+        # Sequences of actions
         self.fullSequenceButton = QPushButton("Run full sequences")
         self.fullSequenceButton.pressed.connect(self.fullSequence)
 
@@ -131,25 +141,40 @@ class Main(QMainWindow):
         self.fullSequenceLabel.setText("Nb of motor/lidar/camera sequences")
         self.nbOfSequences = QLineEdit("1")
 
+        # Close code
+        self.closeCodeButton = QPushButton("Close Code")
+        self.closeCodeButton.pressed.connect(self.closeEvent) 
+
+        # Informations
         self.gyroValue = QLabel()
         self.gyroValue.setText('Gyro value:')
 
         self.miniLidarValue = QLabel()
         self.miniLidarValue.setText('Mini lidar value:')
 
+        # Window layout creation
         layout = QFormLayout()
-
+        
         layout.addRow(self.robotNumberLabel,self.robotNumber)
+        layout.addRow(QLabel('Motors -------------'))
         layout.addRow(self.runMotorButton,self.motorPayload)
         layout.addRow(self.rotationButton,self.rotationPayload)
         layout.addRow(self.stopMotorButton)
-        layout.addRow(self.closeCodeButton)
+        layout.addRow(QLabel('Camera -------------'))
         layout.addRow(self.cameraButton)
         layout.addRow(self.objectsCameraButton)
-        layout.addRow(self.radioSendButton,self.radioPayload)
+        layout.addRow(QLabel('Messages -----------'))
+        layout.addRow(self.radioSendButton,self.wifiSendButton)
+        layout.addRow(self.messagePayload)
+        layout.addRow(QLabel('Lidar --------------'))
         layout.addRow(self.runLidarButton)
-        layout.addRow(self.roboticArmRun,self.roboticArmPayload)
+        layout.addRow(QLabel('Robotic arm --------'))
+        layout.addRow(self.moveRoboticArmButton,self.foldRoboticArmButton)
+        layout.addRow(self.roboticArmPayload)
+        layout.addRow(QLabel('--------------------'))
         layout.addRow(self.fullSequenceButton,self.nbOfSequences)
+        layout.addRow(self.closeCodeButton)
+        layout.addRow(QLabel('--------------------'))
         layout.addRow(self.gyroValue)
         layout.addRow(self.miniLidarValue)
 
@@ -160,6 +185,7 @@ class Main(QMainWindow):
         self.setCentralWidget(w)
 
         self.show()
+
 
     def updateBoard(self):
         
@@ -202,8 +228,15 @@ class Main(QMainWindow):
         app.quit()
         100/0
 
-    def sendRadio(self):
-        self.mqtt.sendMessage(message="send/bonjour", receiver="radio", awnserNeeded=False)
+    def sendRadio(self,payload=""):
+        if payload == "":
+            payload = str(self.messagePayload.text())
+        self.mqtt.sendMessage(message=payload, receiver="radio", awnserNeeded=False)
+
+    def sendWifi(self,payload=""):
+        if payload == "":
+            payload = str(self.messagePayload.text())
+        self.mqtt.sendMessage(message=payload, receiver="wifi", awnserNeeded=False)
 
     def on_message(self, client, data, message):
         self.mqtt.decodeMessage(message=message)
@@ -213,45 +246,52 @@ class Main(QMainWindow):
             if self.mqtt.lastSender == "miniLidar":
                 self.miniLidarValue.setText(f"MiniLidar value: \tDistance : {round(float(self.mqtt.lastPayload))} mm")
         
-    def runMotor(self):
-        payload = str(self.motorPayload.text())
-        self.dataBase.updateSensorValue("motor", payload)
-        payload = "run," + str(self.motorTime.text()) + "," + str(self.motorDirection.text()) + ",0," + str(self.motorSpeed.text()) + ",0"
-        if self.robotNumber.text() == str(self.idRobot["name"]):
-            res = bool(self.mqtt.sendMessage(message="command/"+payload, receiver="motor", awnserNeeded=True))
-            if res: 
-                print(f"{Fore.GREEN}INFO (Main) -> motor executed {payload} with succes")
-            else:
-                print(f"{Fore.RED}ERROR (Main) -> motor executed {payload} with error")
+    def runMotor(self,payload=""):
+        if payload == "":
+            payload = "run/" + str(self.motorPayload.text())
+#        self.dataBase.updateSensorValue("motor", payload)
+        payload = "run/" + payload
+#        if self.robotNumber.text() == str(self.idRobot["name"]):
+        res = bool(self.mqtt.sendMessage(message="command/"+payload, receiver="motor", awnserNeeded=True))
+        if res: 
+            print(f"{Fore.GREEN}INFO (Main) -> motor executed {payload} with succes")
         else:
-            payload = 'motor_'+ 'command/'+  payload
-            self.mqtt.sendMessage(message="send/"+payload, receiver="radio")
+            print(f"{Fore.RED}ERROR (Main) -> motor executed {payload} with error")
+#        else:
+#            payload = 'motor_'+ 'command/'+  payload
+#            self.mqtt.sendMessage(message="send/"+payload, receiver="radio")
     
-    def motorRotate(self):
-        payload = "rotate," +str(self.rotationPayload.text()) + "," + str(self.motorSpeed.text())
+    def motorRotate(self,payload=""):
+        if payload == "":
+            payload = "rotate," +str(self.rotationPayload.text()) + "," + str(self.motorSpeed.text())
 
-        if self.robotNumber.text() == str(self.idRobot["name"]):
-            res = bool(self.mqtt.sendMessage(message="command/"+payload, receiver="motor", awnserNeeded=True))
-            if res: 
-                print(f"{Fore.GREEN}INFO (Main) -> motor executed {payload} with succes")
-            else:
-                print(f"{Fore.RED}ERROR (Main) -> motor executed {payload} with error")
+#        if self.robotNumber.text() == str(self.idRobot["name"]):
+        res = bool(self.mqtt.sendMessage(message="command/"+payload, receiver="motor", awnserNeeded=True))
+        if res: 
+            print(f"{Fore.GREEN}INFO (Main) -> motor executed {payload} with succes")
         else:
-            payload = 'motor_'+ 'command/'+  payload
-            self.mqtt.sendMessage(message="send/"+payload, receiver="radio")
-
-    def runRoboticArm(self):
-        payload = str(self.roboticArmPayload.text())
-        #self.dataBase.updateSensorValue("motor", payload)
-        #payload = "run-" + str(self.motorTime.text()) + "" + str(self.motorDirection.text()) + "-0-" + str(self.motorSpeed.text()) + "-0"
-        if self.robotNumber.text() == str(self.idRobot["name"]):
-            self.mqtt.sendMessage(message="command/"+payload, receiver="roboticArm")
-        else:
-            payload = 'roboticArm_'+ 'command/'+  payload
-            self.mqtt.sendMessage(message="send/"+payload, receiver="radio")
+            print(f"{Fore.RED}ERROR (Main) -> motor executed {payload} with error")
+#        else:
+#            payload = 'motor_'+ 'command/'+  payload
+#            self.mqtt.sendMessage(message="send/"+payload, receiver="radio")
 
     def stopMotor(self):
         self.mqtt.sendMessage(message="command/stop", receiver="motor")
+
+    def moveRoboticArm(self,payload=""):
+        if payload == "":
+            payload = str(self.roboticArmPayload.text())
+        #self.dataBase.updateSensorValue("motor", payload)
+        #payload = "run-" + str(self.motorTime.text()) + "" + str(self.motorDirection.text()) + "-0-" + str(self.motorSpeed.text()) + "-0"
+#        if self.robotNumber.text() == str(self.idRobot["name"]):
+            self.mqtt.sendMessage(message="command/"+payload, receiver="roboticArm")
+#        else:
+#            payload = 'roboticArm_'+ 'command/'+  payload
+#            self.mqtt.sendMessage(message="send/"+payload, receiver="radio")
+
+    def foldRoboticArm(self):
+        payload="90,100,-40,-80,90,80"
+        self.mqtt.sendMessage(message="command/"+payload, receiver="roboticArm", awnserNeeded=True)
     
     def photoCamera(self,pictureName='pictureName'):
         self.mqtt.sendMessage(message=f"command/{pictureName}", receiver="camera")

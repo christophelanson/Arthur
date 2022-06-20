@@ -10,8 +10,8 @@ from colorama import Fore
 import random
 
 
-AddressCOMPASS = 0x02
-AddressPITCH = 0x04
+AddressCOMPASS = 0x02 #0x02
+AddressPITCH = 0x04 #0x04
 AddressROLL = 0x05
 
 class Compass(QRunnable):
@@ -56,7 +56,8 @@ class Compass(QRunnable):
         
     def sendValue(self):
         value = self.getSensorValue()
-        self.dataBase.updateSensorValue("gyro", value)
+        #self.mqtt.sendMessage(message="state/"+value, receiver="main", awnserNeeded=False)
+        #self.dataBase.updateSensorValue("gyro", value)
 
     def setSpeedData(self):
         self.speedData = self.mqtt.lastPayload
@@ -64,7 +65,8 @@ class Compass(QRunnable):
         self.timer.start(self.speedData)
 
     def getSensorValue(self):
-        #return random.randrange(1000)
+        #print(random.randrange(1000))
+        #return str(random.randrange(1000))+",1,1"
         compass = self.readRegister16bits(AddressCOMPASS)/10
         pitch = self.readRegister8bits(AddressPITCH)
         roll = self.readRegister8bits(AddressROLL)
