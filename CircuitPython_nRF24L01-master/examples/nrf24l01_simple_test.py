@@ -17,6 +17,7 @@ SPI_BUS, CSN_PIN, CE_PIN = (None, None, None)
 
     # using board.SPI() automatically selects the MCU's
     # available SPI pins, board.SCK, board.MOSI, board.MISO
+    
 SPI_BUS = board.SPI()  # init spi bus object
 
 # change these (digital output) pins accordingly
@@ -25,6 +26,8 @@ CSN_PIN = DigitalInOut(board.D5)
 
 
 # initialize the nRF24L01 on the spi bus object
+
+
 nrf = RF24(SPI_BUS, CSN_PIN, CE_PIN)
 # On Linux, csn value is a bit coded
 #                 0 = bus 0, CE0  # SPI bus 0 is enabled by default

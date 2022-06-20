@@ -37,9 +37,9 @@ class MiniLidar(QRunnable):
         if self.mqtt.lastCommand == "command":
             self.executeCommand(self.mqtt.lastPayload)
         
-        if self.mqtt.lastCommand == "gyroValue":
-            self.gyroValue = int(self.mqtt.lastPayload.split(",")[0])
-        self.messageReceived = False
+#        if self.mqtt.lastCommand == "gyroValue":
+#            self.gyroValue = int(self.mqtt.lastPayload.split(",")[0])
+#        self.messageReceived = False
         
     @pyqtSlot()
     def run(self):

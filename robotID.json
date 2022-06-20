@@ -1,12 +1,23 @@
 {
     "environment": {
-        "robotNames" : ["Arthur"]
+        "robotNames": [
+            "Daddy",
+            "Arthur"
+        ],
+        "info": "entire brotherhood including Daddy"
     },
     "ID": {
-        "name": "Daddy",
+        "name": "Arthur",
         "hardwareList": [
             "main",
-            "wifi"
+            "motor",
+            "radio",
+            "wifi",
+            "gyro",
+            "lidar",
+            "miniLidar",
+            "roboticArm",
+            "camera"
         ],
         "info": ""
     },
@@ -35,26 +46,24 @@
         "motorTorn": 8.8,
         "maxSpeed": 0.873,
         "dT": 0.08,
-        "info": "Torn kg.cm, maxSpeed m/s, dT sec incremental time step for acceleration"
+        "info": "Torn in kg.cm, maxSpeed in m/s, dT in sec incremental time step for acceleration"
     },
     "radio": {
-        "nodeIDs": ["Daddy"],
         "info": ""
     },
     "lidar": {
         "type": "YLidarX2",
         "position": [
             0,
-            -170,
+            170,
             170
         ],
         "attitude": [
             0,
-            0,
-            190
+            190,
+            0
         ],
         "lidar_kwargs": {
-            "plot_name": "AH422",
             "bin_size": 10,
             "expected_width": 200,
             "expected_distance": 80,

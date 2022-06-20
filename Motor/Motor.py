@@ -64,14 +64,13 @@ class Motor(QRunnable):
     
         if self.mqtt.lastCommand == "command":
             self.executeCommand(self.mqtt.lastPayload)
-            self.mqtt.sendMessage(message="return/1", receiver=self.mqtt.lastSender)
-        
-        
+            self.mqtt.sendMessage(message="return/1", receiver=self.mqtt.lastSender)     
 
         if self.mqtt.lastCommand == "gyroValue":
             self.gyroValue = int(self.mqtt.lastPayload.split(",")[0])
         self.messageReceived = False
         
+    
     @pyqtSlot()
     def run(self):
             print("Thread", self.hardwareName, "is running")
@@ -82,6 +81,7 @@ class Motor(QRunnable):
         print(self.hardwareName, "closed")
         exit(0)
 
+
     def stop(self):
         self.pwm_ENA.stop()
         self.pwm_ENB.stop()
@@ -91,13 +91,15 @@ class Motor(QRunnable):
         self.isStop = False
         self.state = "stop"
     
+
     def getGyroValue(self):
         #print(self.dataBase.getSensorValue("gyro"))
         #return float(self.dataBase.getSensorValue("gyro").split("-")[0])
         return float(self.gyro.getSensorValue().split(",")[0])
         
         #return self.messageRouter.route(senderName=self.node, receiverName=self.node, hardware="gyro", command=command, isReturn=False, channel="own")
-        
+    
+
     def calculateCorrectionRun(self, currentSpeed):
         currentDirection = self.getGyroValue()
 
@@ -114,21 +116,25 @@ class Motor(QRunnable):
         #print(self.startDirection, currentDirection, currentSpeedLeft, currentSpeedRight)
         return currentSpeedLeft, currentSpeedRight
 
+
     def calculateCorrectionTurn(self, currentSpeedLeft, currentSpeedRight):
         currentSpeedRight = currentSpeedRight * (1 - self.correctionTurn)
         currentSpeedLeft = currentSpeedLeft * (1 + self.correctionTurn)
         return currentSpeedLeft, currentSpeedRight
+
 
     def calculateSpeedRun(self, step, currentSpeed, maxSpeed):
         currentSpeed = currentSpeed + (maxSpeed * self.listStep[step])
         currentSpeedLeft, currentSpeedRight = self.calculateCorrectionRun(currentSpeed)
         return currentSpeed, currentSpeedLeft, currentSpeedRight
 
+
     def calculateSpeedTurn(self, step, currentSpeedLeft, currentSpeedRight, speedLeft, speedRight):
         currentSpeedLeft = currentSpeedLeft + (speedLeft * self.listStep[step])
         currentSpeedRight = currentSpeedRight + (speedRight * self.listStep[step])
         currentSpeedLeft, currentSpeedRight = self.calculateCorrectionTurn(currentSpeedLeft, currentSpeedRight)
         return currentSpeedLeft, currentSpeedRight
+
 
     def driveMotor(self, currentSpeedLeft, currentSpeedRight, timeStep, direction):
         if currentSpeedLeft * direction < 0:
@@ -144,6 +150,7 @@ class Motor(QRunnable):
         self.pwm_ENA.start(abs(currentSpeedLeft))
         self.pwm_ENB.start(abs(currentSpeedRight))
         time.sleep(timeStep)
+
 
     def move(self, timeMove, direction, initSpeed, maxSpeed, finalSpeed):
         self.state = "running"
@@ -164,6 +171,7 @@ class Motor(QRunnable):
                 self.driveMotor(currentSpeedLeft, currentSpeedRight, self.dT, direction)
         self.stop()
         print("MOTOR STOP")
+
 
     def rotate(self, angle, speed):
 

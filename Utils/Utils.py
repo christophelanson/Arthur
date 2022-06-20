@@ -56,5 +56,5 @@ def motor_distance_to_time(distance,initSpeed,maxSpeed,finalSpeed,smoothRun = Tr
     return round(runTime,2)
 
 #print(lidar_to_roboticArm_conversion(65,1000))
-print(motor_distance_to_time(0.873,0,50,00, smoothRun=True))
-print(motor_distance_to_time(0.873,0,100,0, smoothRun=False))
+print(motor_distance_to_time(10,0,100,0, smoothRun=True))
+print(motor_distance_to_time(10,0,100,0, smoothRun=False))
