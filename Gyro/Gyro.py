@@ -7,11 +7,12 @@ from PyQt5.QtGui import *
 from PyQt5.QtWidgets import *
 from DataBase import DataBase
 from colorama import Fore
+import json
 import random
 
 
-AddressCOMPASS = 0x02 #0x02
-AddressPITCH = 0x04 #0x04
+AddressCOMPASS = 0x02
+AddressPITCH = 0x04
 AddressROLL = 0x05
 
 class Compass(QRunnable):
@@ -20,6 +21,13 @@ class Compass(QRunnable):
         super(Compass, self).__init__()
         self.hardwareName = "gyro"
         #self.dataBase = DataBase.DataBase(id=self.hardwareName)
+
+        # json robot ID file
+        with open('robotID.json') as jsonFile:
+            self.robotID = json.load(jsonFile)
+        self.bearingCorrection = self.robotID['compass']['attitude'][0]
+        self.pitchCorrection = self.robotID['compass']['attitude'][1]
+        self.rollCorrection = self.robotID['compass']['attitude'][2]
         
         self.state = "ready"
         self.bus = smbus.SMBus(1) 
@@ -67,9 +75,9 @@ class Compass(QRunnable):
     def getSensorValue(self):
         #print(random.randrange(1000))
         #return str(random.randrange(1000))+",1,1"
-        compass = self.readRegister16bits(AddressCOMPASS)/10
-        pitch = self.readRegister8bits(AddressPITCH)
-        roll = self.readRegister8bits(AddressROLL)
+        compass =round((self.readRegister16bits(AddressCOMPASS)/10 + self.bearingCorrection) % 360,1)
+        pitch = self.readRegister8bits(AddressPITCH) + self.pitchCorrection
+        roll = self.readRegister8bits(AddressROLL) + self.rollCorrection
         return str(compass)+","+str(pitch)+","+str(roll)
         
     def readRegister16bits(self, addr):        

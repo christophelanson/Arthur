@@ -39,7 +39,7 @@ def lidar_to_roboticArm_conversion(lidarAngle,lidarDistance):
 
 def motor_distance_to_time(distance,initSpeed,maxSpeed,finalSpeed,smoothRun = True):
     """
-    for a given distance in m and a motor speed given as a percentage of (an input 50 means 50% of maxMotorSpeed)
+    for a given distance in m and a motor speed given as a percentage of maxMotorSpeed (an input 50 means 50% of maxMotorSpeed)
     returns expected time in sec to cover this distance
     
     smoothRun = True: takes acceleration and deceleration ito account
@@ -56,5 +56,5 @@ def motor_distance_to_time(distance,initSpeed,maxSpeed,finalSpeed,smoothRun = Tr
     return round(runTime,2)
 
 #print(lidar_to_roboticArm_conversion(65,1000))
-print(motor_distance_to_time(10,0,100,0, smoothRun=True))
-print(motor_distance_to_time(10,0,100,0, smoothRun=False))
+#print(motor_distance_to_time(10,0,100,0, smoothRun=True))
+#print(motor_distance_to_time(10,0,100,0, smoothRun=False))

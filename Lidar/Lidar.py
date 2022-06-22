@@ -40,7 +40,7 @@ class Lidar(QRunnable):
         #self.dataBase = DataBase.DataBase(id=self.hardwareName)
         self.ser = serial.Serial(port='/dev/ttyUSB0', baudrate='115200') #/dev/ttyUSB0
         self.ser.close()
-        self.nbDonneesACollecter = 7200
+        self.nbDonneesACollecter = 7200 # 7200
         self.filtreEcartDistance = 100 #mm, écart de distance nécessaire pour changer d'objet
         self.seuilEcart = 6 # score de discontinuité à atteindre pour détecter un objet (début ou fin), cf. document protocole
         self.correctionAngle0 = 192.25 #correction d'angle pour que angle = 0 => avant du robot
@@ -118,6 +118,7 @@ class Lidar(QRunnable):
         outputDataList = []
         dict_angle_distance = {}
         while dataCount < self.nbDonneesACollecter :
+#            print(dataCount)
             x = self.ser.read().hex()
             if x == "aa":
                 if not data_start:
