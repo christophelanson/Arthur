@@ -9,7 +9,7 @@ from PyQt5.QtCore import QTimer
 from PyQt5.QtCore import *
 from PyQt5.QtGui import *
 from PyQt5.QtWidgets import *
-from DataBase import DataBase
+#from DataBase import DataBase
 from colorama import Fore
 import random
 
@@ -40,7 +40,7 @@ class Lidar(QRunnable):
         #self.dataBase = DataBase.DataBase(id=self.hardwareName)
         self.ser = serial.Serial(port='/dev/ttyUSB0', baudrate='115200') #/dev/ttyUSB0
         self.ser.close()
-        self.nbDonneesACollecter = 7200
+        self.nbDonneesACollecter = 7200 # 7200
         self.filtreEcartDistance = 100 #mm, écart de distance nécessaire pour changer d'objet
         self.seuilEcart = 6 # score de discontinuité à atteindre pour détecter un objet (début ou fin), cf. document protocole
         self.correctionAngle0 = 192.25 #correction d'angle pour que angle = 0 => avant du robot
@@ -118,6 +118,7 @@ class Lidar(QRunnable):
         outputDataList = []
         dict_angle_distance = {}
         while dataCount < self.nbDonneesACollecter :
+#            print(dataCount)
             x = self.ser.read().hex()
             if x == "aa":
                 if not data_start:
@@ -127,6 +128,7 @@ class Lidar(QRunnable):
                 #self.data_dec.append(int(x,16))
                 if len(data) > 3 : 
                     LSN = int(data[3],16)*2
+#                    print(LSN)                    
                     if len(data) >= LSN + 10:
                         CT = data[2]
                         angle = str(data[5]) + str(data[4])
@@ -140,6 +142,7 @@ class Lidar(QRunnable):
                         if CT != 1 and LSN != 2:
                             for i in range(10,LSN+10, 2 ):
                                 distance = int(str(data[i+1]) + str(data[i]),16)/4
+#                                print(distance)
                                 if distance != 0 :
                                     angle_correct = math.atan(21.8*((155.3-distance)/(155.3*distance)))
                                 else :
