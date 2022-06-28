@@ -355,13 +355,17 @@ class Main(QMainWindow):
             lidar_kwargs = data['lidar']['lidar_kwargs']
 
         nextTurn = payload[1]
-        expected_X = payload[2]
-        expected_Y = payload[3]
+        expected_X = int(payload[2])
+        expected_Y = int(payload[3])
+        # other parmeters
+        update_map = True # update vine_map file after process
+        bin_size = lidar_kwargs['bin_size']
+        expected_width = lidar_kwargs['expected_width']
+        plot_name = lidar_kwargs['plot_name']
+        path_to_vine_map_file = f'Log/vine_map_{plot_name}.csv'
+        create_new_map = True
 
         for sequenceNumber in range(int(nbOfSequences)):
-            # motor
-#            self.runMotor()
-#            time.sleep(3)
             # lidar
             self.runLidar()
             # landmarks
@@ -385,13 +389,36 @@ class Main(QMainWindow):
                 angle = angle%360
                 distance = sqrt(landmarks[item][1]**2+landmarks[item][2]**2)
                 objectsToCapture.append([objectNb, angle, distance])
-            # save landmarks file as current and in log
+            # save objects to picture and landmarks file as current and in log
             np.savetxt(f'Log/objectsToCapture.csv', objectsToCapture, fmt= '%.2f', delimiter=",")
             np.savetxt(f'Log/Landmarks.csv', landmarks, fmt= '%.2f', delimiter=",")
             np.savetxt(f'Log/Landmarks{sequenceNumber}.csv', landmarks, fmt= '%.2f', delimiter=",")
-            # pictures
+            # take pictures
             self.objectsCamera(sequenceName = f'Sequence{sequenceNumber}',path_to_objects_file = 'Log/objectsToCapture.csv')
+            # update map
+            # calculation true position and update vine_map
+            X_position, Y_position, direction = LidarCalculations.position_and_map_update(expected_X,
+                                    expected_Y,
+                                    path_to_vine_map_file,
+                                    create_new_map=create_new_map,
+                                    update_map=update_map,
+                                    landmarks=landmarks,
+                                    best_angle=best_angle,
+                                    distance_to_lidar=distance_to_lidar,
+                                    bin_size=bin_size,
+                                    expected_width=expected_width,
+                                    crop_distance=10000,
+                                    verbose=1)
+            create_new_map=False
+            # motor
 
+            self.runMotor("run/0.8,1,0,70,0")
+#            time.sleep(3)
+            expected_X = X_position + 800
+            expected_Y = Y_position
+            print(f'sequence {sequenceNumber} done')
+        Utils.show_map(plot_name)
+        
 
 if __name__ == "__main__":
 
