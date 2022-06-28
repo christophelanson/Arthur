@@ -1,5 +1,8 @@
 import json
 from math import cos, sin, sqrt, atan, acos, pi
+import matplotlib.pyplot as plt
+import seaborn as sns
+import numpy as np
 
 #-------------------
 # JSON import and conventions
@@ -55,6 +58,22 @@ def motor_distance_to_time(distance,initSpeed,maxSpeed,finalSpeed,smoothRun = Tr
         runTime = distance/(maxSpeed/100)/maxMotorSpeed
     return round(runTime,2)
 
+def show_map(plot_name):
+    print("showing map")
+    # plot full vine_map
+    plt.figure(figsize=(15,15))
+    # plot_name = 'AH222'
+    path_to_vine_map_file = f'Log/vine_map_{plot_name}.csv'
+    vine_map = np.loadtxt(path_to_vine_map_file, delimiter=",", dtype=float) # obj_nb, x, y, size, grade
+    vine_map = np.asarray(vine_map)
+    sns.scatterplot(x=vine_map[:,1],y=vine_map[:,2],size=vine_map[:,4], hue=vine_map[:,4])
+    plt.xlim(min(vine_map[:,1])-200,max(vine_map[:,1])+200)
+    plt.ylim(min(vine_map[:,2])-200,max(vine_map[:,2])+200)
+    plt.grid()
+    plt.show();
+
+
 #print(lidar_to_roboticArm_conversion(65,1000))
 #print(motor_distance_to_time(10,0,100,0, smoothRun=True))
 #print(motor_distance_to_time(1.1,0,60,0, smoothRun=False))
+show_map('test')
