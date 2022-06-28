@@ -9,7 +9,7 @@ from PyQt5.QtCore import QTimer
 from PyQt5.QtCore import *
 from PyQt5.QtGui import *
 from PyQt5.QtWidgets import *
-from DataBase import DataBase
+#from DataBase import DataBase
 from colorama import Fore
 import random
 
@@ -128,6 +128,7 @@ class Lidar(QRunnable):
                 #self.data_dec.append(int(x,16))
                 if len(data) > 3 : 
                     LSN = int(data[3],16)*2
+#                    print(LSN)                    
                     if len(data) >= LSN + 10:
                         CT = data[2]
                         angle = str(data[5]) + str(data[4])
@@ -141,6 +142,7 @@ class Lidar(QRunnable):
                         if CT != 1 and LSN != 2:
                             for i in range(10,LSN+10, 2 ):
                                 distance = int(str(data[i+1]) + str(data[i]),16)/4
+#                                print(distance)
                                 if distance != 0 :
                                     angle_correct = math.atan(21.8*((155.3-distance)/(155.3*distance)))
                                 else :

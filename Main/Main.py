@@ -14,6 +14,7 @@ from Mqtt import Mqtt
 from HardwareHandler import HardwareHandler #Permet de creer un hardware et d'executer son code en //, les hardwares fonctionnelles sont stockés dans un dictionnaire
 from Motor import Motor
 from Lidar import Lidar
+from Lidar import LidarCalculations
 from MiniLidar import MiniLidar
 from Camera import Camera
 from Gyro import Gyro
@@ -25,7 +26,7 @@ from Utils import Utils
 
 # from Json import Json
 import json
-
+from math import atan, sqrt
 
 
 class Main(QMainWindow):
@@ -58,7 +59,8 @@ class Main(QMainWindow):
             self.hardwareHandler.addHardware("roboticArm", RoboticArm.RoboticArm)
         if "camera" in self.hardwareList:
             self.hardwareHandler.addHardware("camera", Camera.Camera)
-        #self.hardwareHandler.addHardware("lidar", lidar.Lidar)
+#        if "lidar" in self.hardwareList:
+#            self.hardwareHandler.addHardware("lidar", Lidar.Lidar)
         if "miniLidar" in self.hardwareList:
             self.hardwareHandler.addHardware("miniLidar", MiniLidar.MiniLidar)
 
@@ -212,11 +214,13 @@ class Main(QMainWindow):
 
         print("Collecting Lidar data")
 
-        res = bool(self.mqtt.sendMessage(message="command/scan", receiver="lidar", awnserNeeded=True))
-        if res: 
-            print(f"{Fore.GREEN}INFO (Main) -> lidar executed with succes")
-        else:
-            print(f"{Fore.RED}ERROR (Main) -> lidar executed  with error")
+        #res = bool(self.mqtt.sendMessage(message="command/scan", receiver="lidar", awnserNeeded=True))
+        #if res: 
+        #    print(f"{Fore.GREEN}INFO (Main) -> lidar executed with success")
+        #else:
+        #    print(f"{Fore.RED}ERROR (Main) -> lidar executed  with error")
+        outputDataList = self.lidar.getData(saveLidarCSV=False)
+        self.lidar.createOutputDataList(outputDataList)
 
         print("Unfolding Arm")
         payload="90,180,250,10,90,40"
@@ -298,7 +302,7 @@ class Main(QMainWindow):
     def photoCamera(self,pictureName='pictureName'):
         self.mqtt.sendMessage(message=f"command/{pictureName}", receiver="camera")
         
-    def objectsCamera(self,sequenceName='sequence'):
+    def objectsCamera(self,sequenceName='sequence',path_to_objects_file = 'Log/objectsToCapture.csv'):
 
 # ADD CORRECTION to angle and distance to take into account the fact that Lidar and Robotic Arm are 
 # done 
@@ -306,13 +310,12 @@ class Main(QMainWindow):
         # Lidar angle correction (LidarAC)
         # NB a corrected angle will point according to RoboticArm servo angles
         LidarAC = 280
-        #load outputObjectsFile.csv
-        path_to_output_objects_file = 'Log/outputObjectsFile.csv'
-        lidar_objects = np.loadtxt(path_to_output_objects_file, delimiter=",", dtype=float)
+        # load csv objects file to capture
+        lidar_objects = np.loadtxt(path_to_objects_file, delimiter=",", dtype=float)
         filtered_lidar_objects = []
         for object_nb in range(len(lidar_objects)):
-            angle = (lidar_objects[object_nb][1]+lidar_objects[object_nb][3])/2
-            distance = (lidar_objects[object_nb][2]+lidar_objects[object_nb][4])/2
+            angle = lidar_objects[object_nb][1]
+            distance = lidar_objects[object_nb][2]
             # keep only objects closer than 2000 mm and angle in [0,180] - RobotArm-wise
             angle = LidarAC - angle
             angle, distance = Utils.lidar_to_roboticArm_conversion(angle, distance)
@@ -336,32 +339,58 @@ class Main(QMainWindow):
         payload = payload.split(",")
         # nbOfSequences, surveying (Left/Right), X0, Y0, plotName, vineWidth, vineDistance')
         nbOfSequences = payload[0]
-        # update json file (plot name, expected vine width and distance)
+        # update json file (plot name, expected vine width and distance) and get lidar_kwargs
         with open('robotID.json','r+') as jsonFile:
             data = json.load(jsonFile)
-            if payload(5) != "":
-                data['lidar']['lidar_kwargs']['expected_width']=payload[5]
-            if payload(6) != "":
-                data['lidar']['lidar_kwargs']['expected_distance']=payload[6]
-            if payload(6) != "":
-                data['lidar']['lidar_kwargs']['plot_name']=payload[4]
+        if payload[5] != "":
+            data['lidar']['lidar_kwargs']['expected_width']=int(payload[5])
+        if payload[6] != "":
+            data['lidar']['lidar_kwargs']['expected_distance']=int(payload[6])
+        if payload[4] != "":
+            data['lidar']['lidar_kwargs']['plot_name']=payload[4]
+        with open('robotID.json','w') as jsonFile:
             json.dump(data,jsonFile)
+        with open('robotID.json') as jsonFile:
+            data = json.load(jsonFile)
+            lidar_kwargs = data['lidar']['lidar_kwargs']
+
         nextTurn = payload[1]
         expected_X = payload[2]
         expected_Y = payload[3]
 
         for sequenceNumber in range(int(nbOfSequences)):
             # motor
-            self.runMotor()
-            time.sleep(3)
+#            self.runMotor()
+#            time.sleep(3)
             # lidar
             self.runLidar()
-            # save current file in log
+            # landmarks
             path_to_output_objects_file = 'Log/outputObjectsFile.csv'
-            lidar_objects = np.loadtxt(path_to_output_objects_file, delimiter=",", dtype=float)
-            np.savetxt(f'Log/outputObjectsFile{sequenceNumber}.csv', lidar_objects, fmt= '%.2f', delimiter=",")
+            landmarks, best_angle, distance_to_lidar = LidarCalculations.process_lidar_file_to_landmarks(path_to_output_objects_file,
+                                                                                lidar_kwargs,
+                                                                                verbose=1)
+            # create picture object (nb, angle, distance) landmarks (nb,x,y,size,grade)
+            objectsToCapture = []
+            for item in range(len(landmarks)):
+                objectNb = landmarks[item][0]
+                if landmarks[item][1] > 0:
+                    angle = atan(landmarks[item][2]/landmarks[item][1])*180/3.14159
+                elif landmarks[item][1] == 0:
+                    if landmarks[item][2] > 0 :
+                        angle = 90
+                    else:
+                        angle = -90
+                else:
+                    angle = atan(landmarks[item][2]/landmarks[item][1])*180/3.14159 + 180
+                angle = angle%360
+                distance = sqrt(landmarks[item][1]**2+landmarks[item][2]**2)
+                objectsToCapture.append([objectNb, angle, distance])
+            # save landmarks file as current and in log
+            np.savetxt(f'Log/objectsToCapture.csv', objectsToCapture, fmt= '%.2f', delimiter=",")
+            np.savetxt(f'Log/Landmarks.csv', landmarks, fmt= '%.2f', delimiter=",")
+            np.savetxt(f'Log/Landmarks{sequenceNumber}.csv', landmarks, fmt= '%.2f', delimiter=",")
             # pictures
-            self.objectsCamera(sequenceName = f'Sequence{sequenceNumber}')
+            self.objectsCamera(sequenceName = f'Sequence{sequenceNumber}',path_to_objects_file = 'Log/objectsToCapture.csv')
 
 
 if __name__ == "__main__":

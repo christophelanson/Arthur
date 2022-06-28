@@ -15,6 +15,7 @@ from Utils import Utils
 with open('robotID.json') as jsonFile:
     robotID = json.load(jsonFile)
 robotWidth = robotID['dimensions']['width']
+robotMaxSpeed = robotID['motors']['maxSpeed']
 
 class Motor(QRunnable):
 
@@ -130,9 +131,9 @@ class Motor(QRunnable):
         elif deltaCompass > 180:
             deltaCompass -= 360
 
-        correctionRun = (deltaCompass*5) / 180 # fonction à vérifier
-        rotateSpeedRight = rotateSpeedRight * (1 - correctionRun)
-        rotateSpeedLeft = rotateSpeedLeft * (1 + correctionRun)
+        correctionTurn = deltaCompass*3 # fonction à vérifier
+        rotateSpeedRight = rotateSpeedRight - correctionTurn #* (1 - correctionTurn)
+        rotateSpeedLeft = rotateSpeedLeft + correctionTurn #* (1 + correctionTurn)
         #print(self.startDirection, currentDirection, rotateSpeedLeft, rotateSpeedRight)
         return rotateSpeedLeft, rotateSpeedRight
 
@@ -142,7 +143,7 @@ class Motor(QRunnable):
         currentSpeedLeft, currentSpeedRight = self.calculateCorrectionRun(currentSpeed)
         return currentSpeed, currentSpeedLeft, currentSpeedRight
 
-
+# this function is not used anymore
     def calculateSpeedTurn(self, step, currentSpeedLeft, currentSpeedRight, speedLeft, speedRight):
         currentSpeedLeft = currentSpeedLeft + (speedLeft * self.listStep[step])
         currentSpeedRight = currentSpeedRight + (speedRight * self.listStep[step])
@@ -165,7 +166,7 @@ class Motor(QRunnable):
         self.pwm_ENB.start(abs(currentSpeedRight))
         time.sleep(timeStep)
 
-
+# this function is not used anymore
     def move2(self, timeMove, direction, initSpeed, maxSpeed, finalSpeed):
         self.state = "running"
         self.startDirection = self.getGyroValue()
@@ -218,30 +219,19 @@ class Motor(QRunnable):
             currentSpeedRight = max(min(currentSpeedRight,99),-99)
             self.driveMotor(currentSpeedLeft, currentSpeedRight, self.dT, direction)
         
-        # for i, step in enumerate(self.listStep):
-        #     if self.isStop:
-        #         self.stop()
-        #         break
-        #     else:
-        #         currentSpeed, currentSpeedLeft, currentSpeedRight = self.calculateSpeedRun(i, currentSpeed, maxSpeed)
-        #         currentSpeedLeft = max(min(currentSpeedLeft,99),-99)
-        #         currentSpeedRight = max(min(currentSpeedRight,99),-99)
-        #         self.driveMotor(currentSpeedLeft, currentSpeedRight, self.dT, direction)
         self.stop()
         print("Motors stopped")
 
+# this function is not used anymore
     def rotate2(self, angle, speed):
-
         startDirection = self.getGyroValue()
         endDirection = (startDirection + angle)%360
-
         if (angle > 0):
             speedLeft  = speed
             speedRight = -speed
         else:
             speedLeft  = -speed
             speedRight = speed
-
         while (abs(endDirection - self.getGyroValue())%360) > 1:
             self.driveMotor(speedLeft, speedRight, 0.1, 1)
         self.stop()
@@ -250,7 +240,7 @@ class Motor(QRunnable):
         self.state = "rotating"
         self.startDirection = self.getGyroValue()
         self.endDirection = (self.startDirection + angle)%360
-        nominalTime = timeMove # nominal time  = turning time ex acceleration and decceleration #- (self.dT * 12)
+        nominalTime = timeMove - (self.dT * 12) # nominal time  = turning time ex acceleration and decceleration
         nbDtNominalTime = int(nominalTime / self.dT)
         #addzero = list(np.zeros((nbDtNominalTime)))
         #self.listStep = self.listStepUp + addzero + self.listStepDown
@@ -265,27 +255,34 @@ class Motor(QRunnable):
             self.driveMotor(currentSpeedLeft, currentSpeedRight, self.dT, direction)
         # rotate at nominal speed
         # using dT moves to maintain automatic compass rotation correction
-        for i in range(nbDtNominalTime):
-            rotateSpeedLeft = currentSpeed * angle*robotWidth/2/timeMove
-            rotateSpeedRight = -currentSpeed * angle*robotWidth/2/timeMove
+        # initialize rotate speeds (%) at angle (degrees)/nominalTime (sec), eg 30deg/2sec = 15 (%)
+        # (this is NOT scientific and may be changed)
+        rotateSpeedLeft = angle/nominalTime
+        rotateSpeedRight = -rotateSpeedLeft
+        for i in range(nbDtNominalTime):    
             expectedDirection = (self.startDirection + angle *i/nbDtNominalTime)%360
             rotateSpeedLeft, rotateSpeedRight = self.calculateCorrectionTurn(rotateSpeedLeft, rotateSpeedRight, expectedDirection)
+            #print(rotateSpeedLeft,rotateSpeedRight)
             currentSpeedLeft = currentSpeed + rotateSpeedLeft
             currentSpeedRight = currentSpeed + rotateSpeedRight
             currentSpeedLeft = max(min(currentSpeedLeft,99),-99)
             currentSpeedRight = max(min(currentSpeedRight,99),-99)
+            if i%5 == 0:
+                print('Speed:',currentSpeedLeft,'/',currentSpeedRight)
             self.driveMotor(currentSpeedLeft, currentSpeedRight, self.dT, direction)
         # deccelerate in straigt line to finalSpeed
+        # update direction
+        self.startDirection = self.endDirection
         for i in range(len(self.listStepDown)):
             currentSpeed = currentSpeed + ((maxSpeed-finalSpeed) * self.listStepDown[i])
             currentSpeedLeft, currentSpeedRight = self.calculateCorrectionRun(currentSpeed)
             currentSpeedLeft = max(min(currentSpeedLeft,99),-99)
             currentSpeedRight = max(min(currentSpeedRight,99),-99)
             self.driveMotor(currentSpeedLeft, currentSpeedRight, self.dT, direction)
-        
         self.stop()
         print("Motors stopped")
 
+# this function is not used anymore
     def turn(self, timeMove, direction, initSpeed, maxSpeed, finalSpeed, maxRotSpeed):
         self.state = "turning"
         speedLeft = maxSpeed + maxRotSpeed
@@ -340,15 +337,18 @@ class Motor(QRunnable):
             self.move(runningTime, payload[1], payload[2], payload[3], payload[4])
         
         if action == "rotate":
-            runningTime = Utils.motor_distance_to_time((payload[0]*3.14159/180)*payload[1],payload[3],payload[4],payload[5],smoothRun = False) + 12*self.dT
+            runningTime = Utils.motor_distance_to_time((abs(payload[0])*3.14159/180)*payload[1],payload[3],payload[4],payload[5],smoothRun = False) 
             # running time should not be less than 45 degrees per second
-            runningTime = max(runningTime,payload[0]/45)
+            #if runningTime < payload[0]/45:
+            #    payload[4] = payload[4] * runningTime/(payload[0]/45)
+            #    runningTime = max(runningTime,payload[0]/45)
+            runningTime += 12*self.dT
             print(f"Motors rotating {payload[0]} degrees, expected time {runningTime} sec")
             self.rotate(runningTime, payload[0], payload[2], payload[3], payload[4], payload[5])
 
-        if action == "turn":
-            print("Motors turning")
-            self.move(payload[0], payload[1], payload[2], payload[3], payload[4], payload[5])
+#        if action == "turn":
+#            print("Motors turning")
+#            self.move(payload[0], payload[1], payload[2], payload[3], payload[4], payload[5])
 
         if action == "stop":
             self.stop
@@ -357,17 +357,8 @@ class Motor(QRunnable):
 
 if __name__ == "__main__":
     motor = Motor()
-    #motor.run(6, 1, 0, 40, 0)
-    motor.turn(4, 1, 0, 40, 0, 0)
+    # move: timeMove, direction, initSpeed, maxSpeed, finalSpeed
+    #motor.move(2, 1, 0, 60, 0)
 
-
-    # motor.stop()
-    # try:
-    #     pass
-    # except KeyboardInterrupt:
-    #     motor.stop()
-    #     GPIO.cleanup()
-    #
-    #motor.stop()
-    #GPIO.cleanup()
-
+    # rotate: timeMove, angle, direction, initSpeed, maxSpeed, finalSpeed
+    motor.rotate(3,30,1,0,70,0)
