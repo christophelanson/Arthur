@@ -304,12 +304,9 @@ class Main(QMainWindow):
         
     def objectsCamera(self,sequenceName='sequence',path_to_objects_file = 'Log/objectsToCapture.csv'):
 
-# ADD CORRECTION to angle and distance to take into account the fact that Lidar and Robotic Arm are 
-# done 
-
         # Lidar angle correction (LidarAC)
         # NB a corrected angle will point according to RoboticArm servo angles
-        LidarAC = 280
+        LidarAC = 90 #280
         # load csv objects file to capture
         lidar_objects = np.loadtxt(path_to_objects_file, delimiter=",", dtype=float)
         filtered_lidar_objects = []

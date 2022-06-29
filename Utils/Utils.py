@@ -76,4 +76,4 @@ def show_map(plot_name):
 #print(lidar_to_roboticArm_conversion(65,1000))
 #print(motor_distance_to_time(10,0,100,0, smoothRun=True))
 #print(motor_distance_to_time(1.1,0,60,0, smoothRun=False))
-show_map('test')
+#show_map('test')
