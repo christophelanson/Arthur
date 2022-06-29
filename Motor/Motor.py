@@ -256,7 +256,7 @@ class Motor(QRunnable):
         # rotate at nominal speed
         # using dT moves to maintain automatic compass rotation correction
         # initialize rotate speeds (%) at angle (degrees)/nominalTime (sec), eg 30deg/2sec = 15 (%)
-        # (this is NOT scientific and may be changed)
+        # (this is NOT scientific and may be changed):
         rotateSpeedLeft = angle/nominalTime
         rotateSpeedRight = -rotateSpeedLeft
         for i in range(nbDtNominalTime):    

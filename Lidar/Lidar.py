@@ -43,7 +43,7 @@ class Lidar(QRunnable):
         self.nbDonneesACollecter = 7200 # 7200
         self.filtreEcartDistance = 100 #mm, écart de distance nécessaire pour changer d'objet
         self.seuilEcart = 6 # score de discontinuité à atteindre pour détecter un objet (début ou fin), cf. document protocole
-        self.correctionAngle0 = 192.25 #correction d'angle pour que angle = 0 => avant du robot
+        self.correctionAngle0 = 0 # 192.25 #correction d'angle pour que angle = 0 => avant du robot
         self.numeroDeFichier = 0
         self.isScan = False
         self.listChannel = ["all"]
